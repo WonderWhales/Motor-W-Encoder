@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -40,10 +40,10 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
   10:Core/Src/motor.c ****  */
   11:Core/Src/motor.c **** 
   12:Core/Src/motor.c **** #include "motor.h"
-  13:Core/Src/motor.c **** 
-  14:Core/Src/motor.c **** static char freqError = 0;
-  15:Core/Src/motor.c **** 
-  16:Core/Src/motor.c **** #define getFreq(System_CLK, Timer_Prescaler, Timer_Period)		(System_CLK / (Timer_Prescaler+1)) / (T
+  13:Core/Src/motor.c **** #include <math.h>
+  14:Core/Src/motor.c **** 
+  15:Core/Src/motor.c **** static char servoFreqError = 0;
+  16:Core/Src/motor.c **** static char actFreqError = 0;
   17:Core/Src/motor.c **** 
   18:Core/Src/motor.c **** static uint32_t Get_Freq(uint32_t systemClk, uint32_t timerPrescaler, uint32_t timerPeriod){
   29              		.loc 1 18 92 view -0
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
   37              	.LVL1:
   38              		.loc 1 19 23 view .LVU3
   39 0002 B0FBF1F0 		udiv	r0, r0, r1
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 2
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 2
 
 
   40              	.LVL2:
@@ -96,108 +96,110 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
   34:Core/Src/motor.c **** //Servo Functions
   35:Core/Src/motor.c **** Servo_Error Servo_Init(Servo_Instance_t* servo){
   36:Core/Src/motor.c **** 
-  37:Core/Src/motor.c ****     /* Makes sure Servo Config Struct is initialized */
-  38:Core/Src/motor.c ****     if(servo->config == NULL)   
+  37:Core/Src/motor.c ****     /* Makes sure Servo Struct and Servo Config Struct are initialized */
+  38:Core/Src/motor.c ****     if(servo == NULL)   
   39:Core/Src/motor.c ****         return SERVO_INSTANCE_ERROR;
-  40:Core/Src/motor.c **** 
-  41:Core/Src/motor.c ****     uint16_t timFreq;
+  40:Core/Src/motor.c ****     else if(servo->config == NULL)
+  41:Core/Src/motor.c ****         return SERVO_INSTANCE_ERROR;
   42:Core/Src/motor.c **** 
-  43:Core/Src/motor.c **** 	/* Check if this timer is setup correctly for SERVO Control */
-  44:Core/Src/motor.c **** 	timFreq = Get_Freq(HAL_RCC_GetSysClockFreq(), servo->htim->Init.Prescaler, __HAL_TIM_GET_AUTORELOA
-  45:Core/Src/motor.c **** 
-  46:Core/Src/motor.c **** 	if(timFreq != DESIRED_SERVO_FREQ){
-  47:Core/Src/motor.c **** 		freqError = 1;
-  48:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
-  49:Core/Src/motor.c **** 	}
-  50:Core/Src/motor.c **** 
-  51:Core/Src/motor.c **** 	/* Configure Min and Max count based on duty cycle given */
-  52:Core/Src/motor.c **** 	servo->minCnt = servo->config->minDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
-  53:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
-  54:Core/Src/motor.c **** 
-  55:Core/Src/motor.c **** 	/* Zero Out SERVO */
-  56:Core/Src/motor.c **** 	Drive_Servo(servo, 0);
-  57:Core/Src/motor.c **** 
-  58:Core/Src/motor.c ****     return SERVO_OK;
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 3
+  43:Core/Src/motor.c ****     uint16_t timFreq;
+  44:Core/Src/motor.c **** 
+  45:Core/Src/motor.c **** 	/* Check if this timer is setup correctly for SERVO Control */
+  46:Core/Src/motor.c **** 	timFreq = Get_Freq(HAL_RCC_GetSysClockFreq(), servo->htim->Init.Prescaler, __HAL_TIM_GET_AUTORELOA
+  47:Core/Src/motor.c **** 
+  48:Core/Src/motor.c **** 	if(timFreq != DESIRED_SERVO_FREQ){
+  49:Core/Src/motor.c **** 		servoFreqError = 1;
+  50:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
+  51:Core/Src/motor.c **** 	}
+  52:Core/Src/motor.c **** 
+  53:Core/Src/motor.c **** 	/* Configure Min and Max count based on duty cycle given */
+  54:Core/Src/motor.c **** 	servo->minCnt = servo->config->minDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
+  55:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
+  56:Core/Src/motor.c **** 
+  57:Core/Src/motor.c **** 	/* Zero Out SERVO */
+  58:Core/Src/motor.c **** 	Drive_Servo(servo, 0);
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 3
 
 
-  59:Core/Src/motor.c **** }
-  60:Core/Src/motor.c **** 
-  61:Core/Src/motor.c **** Servo_Error Drive_Servo(const Servo_Instance_t* servo, const int8_t angle){
-  60              		.loc 1 61 75 is_stmt 1 view -0
+  59:Core/Src/motor.c **** 
+  60:Core/Src/motor.c ****     return SERVO_OK;
+  61:Core/Src/motor.c **** }
+  62:Core/Src/motor.c **** 
+  63:Core/Src/motor.c **** Servo_Error Drive_Servo(const Servo_Instance_t* servo, const int8_t angle){
+  60              		.loc 1 63 75 is_stmt 1 view -0
   61              		.cfi_startproc
   62              		@ args = 0, pretend = 0, frame = 0
   63              		@ frame_needed = 0, uses_anonymous_args = 0
   64              		@ link register save eliminated.
-  65              		.loc 1 61 75 is_stmt 0 view .LVU7
+  65              		.loc 1 63 75 is_stmt 0 view .LVU7
   66 0000 0346     		mov	r3, r0
-  62:Core/Src/motor.c **** 
-  63:Core/Src/motor.c ****     /* Servo Protection */
-  64:Core/Src/motor.c **** 	if(freqError)
-  67              		.loc 1 64 2 is_stmt 1 view .LVU8
-  68              		.loc 1 64 5 is_stmt 0 view .LVU9
+  64:Core/Src/motor.c **** 
+  65:Core/Src/motor.c ****     /* Servo Protection */
+  66:Core/Src/motor.c **** 	if(servoFreqError)
+  67              		.loc 1 66 2 is_stmt 1 view .LVU8
+  68              		.loc 1 66 5 is_stmt 0 view .LVU9
   69 0002 3C4A     		ldr	r2, .L33
   70 0004 1078     		ldrb	r0, [r2]	@ zero_extendqisi2
   71              	.LVL5:
-  72              		.loc 1 64 4 view .LVU10
+  72              		.loc 1 66 4 view .LVU10
   73 0006 0028     		cmp	r0, #0
   74 0008 6BD1     		bne	.L19
-  65:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
-  66:Core/Src/motor.c **** 
-  67:Core/Src/motor.c **** 	/* Asserting Params */
-  68:Core/Src/motor.c **** 	if(servo == NULL)
-  75              		.loc 1 68 2 is_stmt 1 view .LVU11
-  76              		.loc 1 68 4 is_stmt 0 view .LVU12
+  67:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
+  68:Core/Src/motor.c **** 
+  69:Core/Src/motor.c **** 	/* Asserting Params */
+  70:Core/Src/motor.c **** 	if(servo == NULL)
+  75              		.loc 1 70 2 is_stmt 1 view .LVU11
+  76              		.loc 1 70 4 is_stmt 0 view .LVU12
   77 000a 002B     		cmp	r3, #0
   78 000c 6BD0     		beq	.L20
-  69:Core/Src/motor.c **** 		return SERVO_INSTANCE_ERROR;
-  70:Core/Src/motor.c **** 	else if(angle < servo->config->minAngle)
-  79              		.loc 1 70 7 is_stmt 1 view .LVU13
-  80              		.loc 1 70 23 is_stmt 0 view .LVU14
+  71:Core/Src/motor.c **** 		return SERVO_INSTANCE_ERROR;
+  72:Core/Src/motor.c **** 	else if(angle < servo->config->minAngle)
+  79              		.loc 1 72 7 is_stmt 1 view .LVU13
+  80              		.loc 1 72 23 is_stmt 0 view .LVU14
   81 000e 9A68     		ldr	r2, [r3, #8]
-  82              		.loc 1 70 31 view .LVU15
+  82              		.loc 1 72 31 view .LVU15
   83 0010 92F908C0 		ldrsb	ip, [r2, #8]
-  84              		.loc 1 70 9 view .LVU16
+  84              		.loc 1 72 9 view .LVU16
   85 0014 8C45     		cmp	ip, r1
   86 0016 68DC     		bgt	.L21
-  71:Core/Src/motor.c **** 		return SERVO_RANGE_ERROR_MIN;
-  72:Core/Src/motor.c **** 	else if(angle > servo->config->maxAngle)
-  87              		.loc 1 72 7 is_stmt 1 view .LVU17
-  88              		.loc 1 72 31 is_stmt 0 view .LVU18
+  73:Core/Src/motor.c **** 		return SERVO_RANGE_ERROR_MIN;
+  74:Core/Src/motor.c **** 	else if(angle > servo->config->maxAngle)
+  87              		.loc 1 74 7 is_stmt 1 view .LVU17
+  88              		.loc 1 74 31 is_stmt 0 view .LVU18
   89 0018 92F90920 		ldrsb	r2, [r2, #9]
-  90              		.loc 1 72 9 view .LVU19
+  90              		.loc 1 74 9 view .LVU19
   91 001c 8A42     		cmp	r2, r1
   92 001e 66DB     		blt	.L22
-  61:Core/Src/motor.c **** 
-  93              		.loc 1 61 75 view .LVU20
+  63:Core/Src/motor.c **** 
+  93              		.loc 1 63 75 view .LVU20
   94 0020 70B4     		push	{r4, r5, r6}
   95              		.cfi_def_cfa_offset 12
   96              		.cfi_offset 4, -12
   97              		.cfi_offset 5, -8
   98              		.cfi_offset 6, -4
-  73:Core/Src/motor.c **** 		return SERVO_RANGE_ERROR_MAX;
-  74:Core/Src/motor.c **** 
-  75:Core/Src/motor.c **** 	/* Set New Compare Value */
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 4
+  75:Core/Src/motor.c **** 		return SERVO_RANGE_ERROR_MAX;
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 4
 
 
-  76:Core/Src/motor.c **** 	__HAL_TIM_SET_COMPARE(servo->htim, servo->channel, map(angle, servo->config->minAngle, servo->conf
-  99              		.loc 1 76 2 is_stmt 1 view .LVU21
+  76:Core/Src/motor.c **** 
+  77:Core/Src/motor.c **** 	/* Set New Compare Value */
+  78:Core/Src/motor.c **** 	__HAL_TIM_SET_COMPARE(servo->htim, servo->channel, map(angle, servo->config->minAngle, servo->conf
+  99              		.loc 1 78 2 is_stmt 1 view .LVU21
  100 0022 1C79     		ldrb	r4, [r3, #4]	@ zero_extendqisi2
  101 0024 BCB9     		cbnz	r4, .L4
- 102              		.loc 1 76 2 is_stmt 0 discriminator 1 view .LVU22
+ 102              		.loc 1 78 2 is_stmt 0 discriminator 1 view .LVU22
  103 0026 D868     		ldr	r0, [r3, #12]
  104 0028 1D69     		ldr	r5, [r3, #16]
  105 002a 1B68     		ldr	r3, [r3]
  106              	.LVL6:
- 107              		.loc 1 76 2 discriminator 1 view .LVU23
+ 107              		.loc 1 78 2 discriminator 1 view .LVU23
  108 002c 1E68     		ldr	r6, [r3]
  109              	.LVL7:
- 110              	.LBB10:
- 111              	.LBI10:
+ 110              	.LBB14:
+ 111              	.LBI14:
   22:Core/Src/motor.c **** 
  112              		.loc 1 22 24 is_stmt 1 discriminator 1 view .LVU24
- 113              	.LBB11:
+ 113              	.LBB15:
   24:Core/Src/motor.c **** 		return x_min;
  114              		.loc 1 24 2 discriminator 1 view .LVU25
   24:Core/Src/motor.c **** 		return x_min;
@@ -236,21 +238,21 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
  138              	.L6:
  139              	.LVL11:
   30:Core/Src/motor.c **** 
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 5
+
+
  140              		.loc 1 30 61 view .LVU36
- 141              	.LBE11:
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 5
-
-
- 142              	.LBE10:
- 143              		.loc 1 76 2 view .LVU37
+ 141              	.LBE15:
+ 142              	.LBE14:
+ 143              		.loc 1 78 2 view .LVU37
  144 004a 7263     		str	r2, [r6, #52]
-  77:Core/Src/motor.c **** 
-  78:Core/Src/motor.c ****     return SERVO_OK;
- 145              		.loc 1 78 12 view .LVU38
+  79:Core/Src/motor.c **** 
+  80:Core/Src/motor.c ****     return SERVO_OK;
+ 145              		.loc 1 80 12 view .LVU38
  146 004c 2046     		mov	r0, r4
  147              	.L3:
-  79:Core/Src/motor.c **** }
- 148              		.loc 1 79 1 view .LVU39
+  81:Core/Src/motor.c **** }
+ 148              		.loc 1 81 1 view .LVU39
  149 004e 70BC     		pop	{r4, r5, r6}
  150              		.cfi_remember_state
  151              		.cfi_restore 6
@@ -261,8 +263,8 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
  156              	.LVL12:
  157              	.L27:
  158              		.cfi_restore_state
- 159              	.LBB13:
- 160              	.LBB12:
+ 159              	.LBB17:
+ 160              	.LBB16:
   25:Core/Src/motor.c **** 
  161              		.loc 1 25 3 is_stmt 1 view .LVU40
   25:Core/Src/motor.c **** 
@@ -276,34 +278,34 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
  168              	.L4:
   25:Core/Src/motor.c **** 
  169              		.loc 1 25 10 view .LVU43
- 170              	.LBE12:
- 171              	.LBE13:
-  76:Core/Src/motor.c **** 
- 172              		.loc 1 76 2 discriminator 2 view .LVU44
+ 170              	.LBE16:
+ 171              	.LBE17:
+  78:Core/Src/motor.c **** 
+ 172              		.loc 1 78 2 discriminator 2 view .LVU44
  173 0056 042C     		cmp	r4, #4
  174 0058 15D0     		beq	.L28
-  76:Core/Src/motor.c **** 
- 175              		.loc 1 76 2 discriminator 4 view .LVU45
+  78:Core/Src/motor.c **** 
+ 175              		.loc 1 78 2 discriminator 4 view .LVU45
  176 005a 082C     		cmp	r4, #8
  177 005c 29D0     		beq	.L29
-  76:Core/Src/motor.c **** 
- 178              		.loc 1 76 2 discriminator 7 view .LVU46
+  78:Core/Src/motor.c **** 
+ 178              		.loc 1 78 2 discriminator 7 view .LVU46
  179 005e DE68     		ldr	r6, [r3, #12]
  180 0060 1C69     		ldr	r4, [r3, #16]
  181 0062 1B68     		ldr	r3, [r3]
  182              	.LVL15:
-  76:Core/Src/motor.c **** 
- 183              		.loc 1 76 2 discriminator 7 view .LVU47
+  78:Core/Src/motor.c **** 
+ 183              		.loc 1 78 2 discriminator 7 view .LVU47
  184 0064 1D68     		ldr	r5, [r3]
  185              	.LVL16:
- 186              	.LBB14:
- 187              	.LBI14:
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 6
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 6
 
 
+ 186              	.LBB18:
+ 187              	.LBI18:
   22:Core/Src/motor.c **** 
  188              		.loc 1 22 24 is_stmt 1 discriminator 7 view .LVU48
- 189              	.LBB15:
+ 189              	.LBB19:
   24:Core/Src/motor.c **** 		return x_min;
  190              		.loc 1 24 2 discriminator 7 view .LVU49
   24:Core/Src/motor.c **** 		return x_min;
@@ -342,32 +344,32 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
  214              	.LVL19:
   30:Core/Src/motor.c **** 
  215              		.loc 1 30 61 view .LVU60
- 216              	.LBE15:
- 217              	.LBE14:
-  76:Core/Src/motor.c **** 
- 218              		.loc 1 76 2 view .LVU61
+ 216              	.LBE19:
+ 217              	.LBE18:
+  78:Core/Src/motor.c **** 
+ 218              		.loc 1 78 2 view .LVU61
  219 0082 2A64     		str	r2, [r5, #64]
  220 0084 E3E7     		b	.L3
  221              	.LVL20:
  222              	.L28:
-  76:Core/Src/motor.c **** 
- 223              		.loc 1 76 2 discriminator 3 view .LVU62
+  78:Core/Src/motor.c **** 
+ 223              		.loc 1 78 2 discriminator 3 view .LVU62
  224 0086 DC68     		ldr	r4, [r3, #12]
  225 0088 1D69     		ldr	r5, [r3, #16]
  226 008a 1B68     		ldr	r3, [r3]
  227              	.LVL21:
-  76:Core/Src/motor.c **** 
- 228              		.loc 1 76 2 discriminator 3 view .LVU63
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 7
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 7
 
 
+  78:Core/Src/motor.c **** 
+ 228              		.loc 1 78 2 discriminator 3 view .LVU63
  229 008c 1E68     		ldr	r6, [r3]
  230              	.LVL22:
- 231              	.LBB17:
- 232              	.LBI17:
+ 231              	.LBB21:
+ 232              	.LBI21:
   22:Core/Src/motor.c **** 
  233              		.loc 1 22 24 is_stmt 1 discriminator 3 view .LVU64
- 234              	.LBB18:
+ 234              	.LBB22:
   24:Core/Src/motor.c **** 		return x_min;
  235              		.loc 1 24 2 discriminator 3 view .LVU65
   24:Core/Src/motor.c **** 		return x_min;
@@ -406,21 +408,21 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
  259              	.LVL25:
   30:Core/Src/motor.c **** 
  260              		.loc 1 30 61 view .LVU76
- 261              	.LBE18:
- 262              	.LBE17:
-  76:Core/Src/motor.c **** 
- 263              		.loc 1 76 2 view .LVU77
+ 261              	.LBE22:
+ 262              	.LBE21:
+  78:Core/Src/motor.c **** 
+ 263              		.loc 1 78 2 view .LVU77
  264 00aa B263     		str	r2, [r6, #56]
  265 00ac CFE7     		b	.L3
  266              	.LVL26:
  267              	.L31:
- 268              	.LBB20:
- 269              	.LBB19:
+ 268              	.LBB24:
+ 269              	.LBB23:
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 8
+
+
   25:Core/Src/motor.c **** 
  270              		.loc 1 25 3 is_stmt 1 view .LVU78
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 8
-
-
   25:Core/Src/motor.c **** 
  271              		.loc 1 25 10 is_stmt 0 view .LVU79
  272 00ae 6246     		mov	r2, ip
@@ -432,23 +434,23 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
  277              	.L29:
   25:Core/Src/motor.c **** 
  278              		.loc 1 25 10 view .LVU81
- 279              	.LBE19:
- 280              	.LBE20:
-  76:Core/Src/motor.c **** 
- 281              		.loc 1 76 2 discriminator 6 view .LVU82
+ 279              	.LBE23:
+ 280              	.LBE24:
+  78:Core/Src/motor.c **** 
+ 281              		.loc 1 78 2 discriminator 6 view .LVU82
  282 00b2 DC68     		ldr	r4, [r3, #12]
  283 00b4 1D69     		ldr	r5, [r3, #16]
  284 00b6 1B68     		ldr	r3, [r3]
  285              	.LVL29:
-  76:Core/Src/motor.c **** 
- 286              		.loc 1 76 2 discriminator 6 view .LVU83
+  78:Core/Src/motor.c **** 
+ 286              		.loc 1 78 2 discriminator 6 view .LVU83
  287 00b8 1E68     		ldr	r6, [r3]
  288              	.LVL30:
- 289              	.LBB21:
- 290              	.LBI21:
+ 289              	.LBB25:
+ 290              	.LBI25:
   22:Core/Src/motor.c **** 
  291              		.loc 1 22 24 is_stmt 1 discriminator 6 view .LVU84
- 292              	.LBB22:
+ 292              	.LBB26:
   24:Core/Src/motor.c **** 		return x_min;
  293              		.loc 1 24 2 discriminator 6 view .LVU85
   24:Core/Src/motor.c **** 		return x_min;
@@ -476,11 +478,11 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
   30:Core/Src/motor.c **** 
  309              		.loc 1 30 52 view .LVU93
  310 00cc A2EB0C02 		sub	r2, r2, ip
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 9
+
+
  311              	.LVL32:
   30:Core/Src/motor.c **** 
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 9
-
-
  312              		.loc 1 30 43 view .LVU94
  313 00d0 B3FBF2F3 		udiv	r3, r3, r2
   30:Core/Src/motor.c **** 
@@ -490,16 +492,16 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
  317              	.LVL33:
   30:Core/Src/motor.c **** 
  318              		.loc 1 30 61 view .LVU96
- 319              	.LBE22:
- 320              	.LBE21:
-  76:Core/Src/motor.c **** 
- 321              		.loc 1 76 2 view .LVU97
+ 319              	.LBE26:
+ 320              	.LBE25:
+  78:Core/Src/motor.c **** 
+ 321              		.loc 1 78 2 view .LVU97
  322 00d6 F263     		str	r2, [r6, #60]
  323 00d8 B9E7     		b	.L3
  324              	.LVL34:
  325              	.L32:
- 326              	.LBB24:
- 327              	.LBB23:
+ 326              	.LBB28:
+ 327              	.LBB27:
   25:Core/Src/motor.c **** 
  328              		.loc 1 25 3 is_stmt 1 view .LVU98
   25:Core/Src/motor.c **** 
@@ -513,10 +515,10 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
  335              	.L30:
   25:Core/Src/motor.c **** 
  336              		.loc 1 25 10 view .LVU101
- 337              	.LBE23:
- 338              	.LBE24:
- 339              	.LBB25:
- 340              	.LBB16:
+ 337              	.LBE27:
+ 338              	.LBE28:
+ 339              	.LBB29:
+ 340              	.LBB20:
   25:Core/Src/motor.c **** 
  341              		.loc 1 25 3 is_stmt 1 view .LVU102
   25:Core/Src/motor.c **** 
@@ -534,30 +536,30 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
  352              		.cfi_restore 6
   25:Core/Src/motor.c **** 
  353              		.loc 1 25 10 view .LVU105
- 354              	.LBE16:
- 355              	.LBE25:
-  65:Core/Src/motor.c **** 
- 356              		.loc 1 65 10 view .LVU106
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 10
+ 354              	.LBE20:
+ 355              	.LBE29:
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 10
 
 
+  67:Core/Src/motor.c **** 
+ 356              		.loc 1 67 10 view .LVU106
  357 00e2 0120     		movs	r0, #1
  358 00e4 7047     		bx	lr
  359              	.L20:
-  69:Core/Src/motor.c **** 	else if(angle < servo->config->minAngle)
- 360              		.loc 1 69 10 view .LVU107
+  71:Core/Src/motor.c **** 	else if(angle < servo->config->minAngle)
+ 360              		.loc 1 71 10 view .LVU107
  361 00e6 0420     		movs	r0, #4
  362 00e8 7047     		bx	lr
  363              	.L21:
-  71:Core/Src/motor.c **** 	else if(angle > servo->config->maxAngle)
- 364              		.loc 1 71 10 view .LVU108
+  73:Core/Src/motor.c **** 	else if(angle > servo->config->maxAngle)
+ 364              		.loc 1 73 10 view .LVU108
  365 00ea 0220     		movs	r0, #2
  366 00ec 7047     		bx	lr
  367              	.L22:
-  73:Core/Src/motor.c **** 
- 368              		.loc 1 73 10 view .LVU109
+  75:Core/Src/motor.c **** 
+ 368              		.loc 1 75 10 view .LVU109
  369 00ee 0320     		movs	r0, #3
- 370              		.loc 1 79 1 view .LVU110
+ 370              		.loc 1 81 1 view .LVU110
  371 00f0 7047     		bx	lr
  372              	.L34:
  373 00f2 00BF     		.align	2
@@ -582,335 +584,1168 @@ ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 1
   38:Core/Src/motor.c ****         return SERVO_INSTANCE_ERROR;
  393              		.loc 1 38 5 view .LVU112
   38:Core/Src/motor.c ****         return SERVO_INSTANCE_ERROR;
- 394              		.loc 1 38 13 is_stmt 0 view .LVU113
- 395 0000 8368     		ldr	r3, [r0, #8]
-  38:Core/Src/motor.c ****         return SERVO_INSTANCE_ERROR;
- 396              		.loc 1 38 7 view .LVU114
- 397 0002 83B3     		cbz	r3, .L38
+ 394              		.loc 1 38 7 is_stmt 0 view .LVU113
+ 395 0000 90B3     		cbz	r0, .L38
   35:Core/Src/motor.c **** 
- 398              		.loc 1 35 48 view .LVU115
- 399 0004 70B5     		push	{r4, r5, r6, lr}
- 400              		.cfi_def_cfa_offset 16
- 401              		.cfi_offset 4, -16
- 402              		.cfi_offset 5, -12
- 403              		.cfi_offset 6, -8
- 404              		.cfi_offset 14, -4
- 405 0006 0446     		mov	r4, r0
+ 396              		.loc 1 35 48 view .LVU114
+ 397 0002 70B5     		push	{r4, r5, r6, lr}
+ 398              		.cfi_def_cfa_offset 16
+ 399              		.cfi_offset 4, -16
+ 400              		.cfi_offset 5, -12
+ 401              		.cfi_offset 6, -8
+ 402              		.cfi_offset 14, -4
+ 403 0004 0446     		mov	r4, r0
+  40:Core/Src/motor.c ****         return SERVO_INSTANCE_ERROR;
+ 404              		.loc 1 40 10 is_stmt 1 view .LVU115
+  40:Core/Src/motor.c ****         return SERVO_INSTANCE_ERROR;
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 11
+
+
+ 405              		.loc 1 40 18 is_stmt 0 view .LVU116
+ 406 0006 8368     		ldr	r3, [r0, #8]
+  40:Core/Src/motor.c ****         return SERVO_INSTANCE_ERROR;
+ 407              		.loc 1 40 12 view .LVU117
+ 408 0008 83B3     		cbz	r3, .L39
+  43:Core/Src/motor.c **** 
+ 409              		.loc 1 43 5 is_stmt 1 view .LVU118
+  46:Core/Src/motor.c **** 
+ 410              		.loc 1 46 2 view .LVU119
+  46:Core/Src/motor.c **** 
+ 411              		.loc 1 46 12 is_stmt 0 view .LVU120
+ 412 000a FFF7FEFF 		bl	HAL_RCC_GetSysClockFreq
+ 413              	.LVL40:
+  46:Core/Src/motor.c **** 
+ 414              		.loc 1 46 53 view .LVU121
+ 415 000e 2568     		ldr	r5, [r4]
+  46:Core/Src/motor.c **** 
+ 416              		.loc 1 46 77 view .LVU122
+ 417 0010 2E68     		ldr	r6, [r5]
+ 418 0012 F26A     		ldr	r2, [r6, #44]
+  46:Core/Src/motor.c **** 
+ 419              		.loc 1 46 12 view .LVU123
+ 420 0014 6968     		ldr	r1, [r5, #4]
+ 421 0016 FFF7FEFF 		bl	Get_Freq
+ 422              	.LVL41:
+  46:Core/Src/motor.c **** 
+ 423              		.loc 1 46 10 view .LVU124
+ 424 001a 80B2     		uxth	r0, r0
+ 425              	.LVL42:
+  48:Core/Src/motor.c **** 		servoFreqError = 1;
+ 426              		.loc 1 48 2 is_stmt 1 view .LVU125
+  48:Core/Src/motor.c **** 		servoFreqError = 1;
+ 427              		.loc 1 48 4 is_stmt 0 view .LVU126
+ 428 001c 3228     		cmp	r0, #50
+ 429 001e 03D0     		beq	.L37
+  49:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
+ 430              		.loc 1 49 3 is_stmt 1 view .LVU127
+  49:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
+ 431              		.loc 1 49 18 is_stmt 0 view .LVU128
+ 432 0020 0120     		movs	r0, #1
+ 433              	.LVL43:
+  49:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
+ 434              		.loc 1 49 18 view .LVU129
+ 435 0022 134B     		ldr	r3, .L44
+ 436 0024 1870     		strb	r0, [r3]
+  50:Core/Src/motor.c **** 	}
+ 437              		.loc 1 50 3 is_stmt 1 view .LVU130
+ 438              	.L36:
+  61:Core/Src/motor.c **** 
+ 439              		.loc 1 61 1 is_stmt 0 view .LVU131
+ 440 0026 70BD     		pop	{r4, r5, r6, pc}
+ 441              	.LVL44:
+ 442              	.L37:
+  54:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
+ 443              		.loc 1 54 2 is_stmt 1 view .LVU132
+  54:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
+ 444              		.loc 1 54 23 is_stmt 0 view .LVU133
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 12
+
+
+ 445 0028 A368     		ldr	r3, [r4, #8]
+  54:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
+ 446              		.loc 1 54 31 view .LVU134
+ 447 002a 93ED007A 		vldr.32	s14, [r3]
+  54:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
+ 448              		.loc 1 54 43 view .LVU135
+ 449 002e D6ED0B7A 		vldr.32	s15, [r6, #44]	@ int
+  54:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
+ 450              		.loc 1 54 41 view .LVU136
+ 451 0032 F8EE677A 		vcvt.f32.u32	s15, s15
+ 452 0036 67EE877A 		vmul.f32	s15, s15, s14
+  54:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
+ 453              		.loc 1 54 16 view .LVU137
+ 454 003a FCEEE77A 		vcvt.u32.f32	s15, s15
+ 455 003e C4ED037A 		vstr.32	s15, [r4, #12]	@ int
+  55:Core/Src/motor.c **** 
+ 456              		.loc 1 55 2 is_stmt 1 view .LVU138
+  55:Core/Src/motor.c **** 
+ 457              		.loc 1 55 31 is_stmt 0 view .LVU139
+ 458 0042 93ED017A 		vldr.32	s14, [r3, #4]
+  55:Core/Src/motor.c **** 
+ 459              		.loc 1 55 43 view .LVU140
+ 460 0046 2B68     		ldr	r3, [r5]
+ 461 0048 D3ED0B7A 		vldr.32	s15, [r3, #44]	@ int
+  55:Core/Src/motor.c **** 
+ 462              		.loc 1 55 41 view .LVU141
+ 463 004c F8EE677A 		vcvt.f32.u32	s15, s15
+ 464 0050 67EE877A 		vmul.f32	s15, s15, s14
+  55:Core/Src/motor.c **** 
+ 465              		.loc 1 55 16 view .LVU142
+ 466 0054 FCEEE77A 		vcvt.u32.f32	s15, s15
+ 467 0058 C4ED047A 		vstr.32	s15, [r4, #16]	@ int
+  58:Core/Src/motor.c **** 
+ 468              		.loc 1 58 2 is_stmt 1 view .LVU143
+ 469 005c 0021     		movs	r1, #0
+ 470 005e 2046     		mov	r0, r4
+ 471              	.LVL45:
+  58:Core/Src/motor.c **** 
+ 472              		.loc 1 58 2 is_stmt 0 view .LVU144
+ 473 0060 FFF7FEFF 		bl	Drive_Servo
+ 474              	.LVL46:
+  60:Core/Src/motor.c **** }
+ 475              		.loc 1 60 5 is_stmt 1 view .LVU145
+  60:Core/Src/motor.c **** }
+ 476              		.loc 1 60 12 is_stmt 0 view .LVU146
+ 477 0064 0020     		movs	r0, #0
+ 478 0066 DEE7     		b	.L36
+ 479              	.LVL47:
+ 480              	.L38:
+ 481              		.cfi_def_cfa_offset 0
+ 482              		.cfi_restore 4
+ 483              		.cfi_restore 5
+ 484              		.cfi_restore 6
+ 485              		.cfi_restore 14
+  39:Core/Src/motor.c ****     else if(servo->config == NULL)
+ 486              		.loc 1 39 16 view .LVU147
+ 487 0068 0420     		movs	r0, #4
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 13
+
+
+ 488              	.LVL48:
+  61:Core/Src/motor.c **** 
+ 489              		.loc 1 61 1 view .LVU148
+ 490 006a 7047     		bx	lr
+ 491              	.LVL49:
+ 492              	.L39:
+ 493              		.cfi_def_cfa_offset 16
+ 494              		.cfi_offset 4, -16
+ 495              		.cfi_offset 5, -12
+ 496              		.cfi_offset 6, -8
+ 497              		.cfi_offset 14, -4
   41:Core/Src/motor.c **** 
- 406              		.loc 1 41 5 is_stmt 1 view .LVU116
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 11
-
-
-  44:Core/Src/motor.c **** 
- 407              		.loc 1 44 2 view .LVU117
-  44:Core/Src/motor.c **** 
- 408              		.loc 1 44 12 is_stmt 0 view .LVU118
- 409 0008 FFF7FEFF 		bl	HAL_RCC_GetSysClockFreq
- 410              	.LVL40:
-  44:Core/Src/motor.c **** 
- 411              		.loc 1 44 53 view .LVU119
- 412 000c 2568     		ldr	r5, [r4]
-  44:Core/Src/motor.c **** 
- 413              		.loc 1 44 77 view .LVU120
- 414 000e 2E68     		ldr	r6, [r5]
- 415 0010 F26A     		ldr	r2, [r6, #44]
-  44:Core/Src/motor.c **** 
- 416              		.loc 1 44 12 view .LVU121
- 417 0012 6968     		ldr	r1, [r5, #4]
- 418 0014 FFF7FEFF 		bl	Get_Freq
- 419              	.LVL41:
-  44:Core/Src/motor.c **** 
- 420              		.loc 1 44 10 view .LVU122
- 421 0018 80B2     		uxth	r0, r0
- 422              	.LVL42:
-  46:Core/Src/motor.c **** 		freqError = 1;
- 423              		.loc 1 46 2 is_stmt 1 view .LVU123
-  46:Core/Src/motor.c **** 		freqError = 1;
- 424              		.loc 1 46 4 is_stmt 0 view .LVU124
- 425 001a 3228     		cmp	r0, #50
- 426 001c 03D0     		beq	.L37
-  47:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
- 427              		.loc 1 47 3 is_stmt 1 view .LVU125
-  47:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
- 428              		.loc 1 47 13 is_stmt 0 view .LVU126
- 429 001e 0120     		movs	r0, #1
- 430              	.LVL43:
-  47:Core/Src/motor.c **** 		return SERVO_FREQ_ERROR;
- 431              		.loc 1 47 13 view .LVU127
- 432 0020 124B     		ldr	r3, .L43
- 433 0022 1870     		strb	r0, [r3]
-  48:Core/Src/motor.c **** 	}
- 434              		.loc 1 48 3 is_stmt 1 view .LVU128
- 435              	.L36:
-  59:Core/Src/motor.c **** 
- 436              		.loc 1 59 1 is_stmt 0 view .LVU129
- 437 0024 70BD     		pop	{r4, r5, r6, pc}
- 438              	.LVL44:
- 439              	.L37:
-  52:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
- 440              		.loc 1 52 2 is_stmt 1 view .LVU130
-  52:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
- 441              		.loc 1 52 23 is_stmt 0 view .LVU131
- 442 0026 A368     		ldr	r3, [r4, #8]
-  52:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
- 443              		.loc 1 52 31 view .LVU132
- 444 0028 93ED007A 		vldr.32	s14, [r3]
-  52:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
- 445              		.loc 1 52 43 view .LVU133
- 446 002c D6ED0B7A 		vldr.32	s15, [r6, #44]	@ int
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 12
-
-
-  52:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
- 447              		.loc 1 52 41 view .LVU134
- 448 0030 F8EE677A 		vcvt.f32.u32	s15, s15
- 449 0034 67EE877A 		vmul.f32	s15, s15, s14
-  52:Core/Src/motor.c **** 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
- 450              		.loc 1 52 16 view .LVU135
- 451 0038 FCEEE77A 		vcvt.u32.f32	s15, s15
- 452 003c C4ED037A 		vstr.32	s15, [r4, #12]	@ int
-  53:Core/Src/motor.c **** 
- 453              		.loc 1 53 2 is_stmt 1 view .LVU136
-  53:Core/Src/motor.c **** 
- 454              		.loc 1 53 31 is_stmt 0 view .LVU137
- 455 0040 93ED017A 		vldr.32	s14, [r3, #4]
-  53:Core/Src/motor.c **** 
- 456              		.loc 1 53 43 view .LVU138
- 457 0044 2B68     		ldr	r3, [r5]
- 458 0046 D3ED0B7A 		vldr.32	s15, [r3, #44]	@ int
-  53:Core/Src/motor.c **** 
- 459              		.loc 1 53 41 view .LVU139
- 460 004a F8EE677A 		vcvt.f32.u32	s15, s15
- 461 004e 67EE877A 		vmul.f32	s15, s15, s14
-  53:Core/Src/motor.c **** 
- 462              		.loc 1 53 16 view .LVU140
- 463 0052 FCEEE77A 		vcvt.u32.f32	s15, s15
- 464 0056 C4ED047A 		vstr.32	s15, [r4, #16]	@ int
-  56:Core/Src/motor.c **** 
- 465              		.loc 1 56 2 is_stmt 1 view .LVU141
- 466 005a 0021     		movs	r1, #0
- 467 005c 2046     		mov	r0, r4
- 468              	.LVL45:
-  56:Core/Src/motor.c **** 
- 469              		.loc 1 56 2 is_stmt 0 view .LVU142
- 470 005e FFF7FEFF 		bl	Drive_Servo
- 471              	.LVL46:
-  58:Core/Src/motor.c **** }
- 472              		.loc 1 58 5 is_stmt 1 view .LVU143
-  58:Core/Src/motor.c **** }
- 473              		.loc 1 58 12 is_stmt 0 view .LVU144
- 474 0062 0020     		movs	r0, #0
- 475 0064 DEE7     		b	.L36
- 476              	.LVL47:
- 477              	.L38:
- 478              		.cfi_def_cfa_offset 0
- 479              		.cfi_restore 4
- 480              		.cfi_restore 5
- 481              		.cfi_restore 6
- 482              		.cfi_restore 14
-  39:Core/Src/motor.c **** 
- 483              		.loc 1 39 16 view .LVU145
- 484 0066 0420     		movs	r0, #4
- 485              	.LVL48:
-  59:Core/Src/motor.c **** 
- 486              		.loc 1 59 1 view .LVU146
- 487 0068 7047     		bx	lr
- 488              	.L44:
- 489 006a 00BF     		.align	2
- 490              	.L43:
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 13
-
-
- 491 006c 00000000 		.word	.LANCHOR0
- 492              		.cfi_endproc
- 493              	.LFE132:
- 495              		.section	.text.DCMotor_Init,"ax",%progbits
- 496              		.align	1
- 497              		.global	DCMotor_Init
- 498              		.syntax unified
- 499              		.thumb
- 500              		.thumb_func
- 502              	DCMotor_Init:
- 503              	.LVL49:
- 504              	.LFB134:
-  80:Core/Src/motor.c **** 
-  81:Core/Src/motor.c **** //DC Motor Functions
-  82:Core/Src/motor.c **** DCMotor_Error DCMotor_Init(DCMotor_Instance_t* dcMotor){
- 505              		.loc 1 82 56 is_stmt 1 view -0
- 506              		.cfi_startproc
- 507              		@ args = 0, pretend = 0, frame = 0
- 508              		@ frame_needed = 0, uses_anonymous_args = 0
- 509              		@ link register save eliminated.
-  83:Core/Src/motor.c **** 
-  84:Core/Src/motor.c **** 
-  85:Core/Src/motor.c ****     return DC_MOTOR_OK;
- 510              		.loc 1 85 5 view .LVU148
-  86:Core/Src/motor.c **** }
- 511              		.loc 1 86 1 is_stmt 0 view .LVU149
- 512 0000 0020     		movs	r0, #0
- 513              	.LVL50:
- 514              		.loc 1 86 1 view .LVU150
- 515 0002 7047     		bx	lr
- 516              		.cfi_endproc
- 517              	.LFE134:
- 519              		.section	.text.Drive_DCMotor,"ax",%progbits
- 520              		.align	1
- 521              		.global	Drive_DCMotor
- 522              		.syntax unified
- 523              		.thumb
- 524              		.thumb_func
- 526              	Drive_DCMotor:
- 527              	.LVL51:
- 528              	.LFB135:
+ 498              		.loc 1 41 16 view .LVU149
+ 499 006c 0420     		movs	r0, #4
+ 500              	.LVL50:
+  41:Core/Src/motor.c **** 
+ 501              		.loc 1 41 16 view .LVU150
+ 502 006e DAE7     		b	.L36
+ 503              	.L45:
+ 504              		.align	2
+ 505              	.L44:
+ 506 0070 00000000 		.word	.LANCHOR0
+ 507              		.cfi_endproc
+ 508              	.LFE132:
+ 510              		.section	.text.DCMotor_Init,"ax",%progbits
+ 511              		.align	1
+ 512              		.global	DCMotor_Init
+ 513              		.syntax unified
+ 514              		.thumb
+ 515              		.thumb_func
+ 517              	DCMotor_Init:
+ 518              	.LVL51:
+ 519              	.LFB134:
+  82:Core/Src/motor.c **** 
+  83:Core/Src/motor.c **** //DC Motor Functions
+  84:Core/Src/motor.c **** DCMotor_Error DCMotor_Init(DCMotor_Instance_t* dcMotor){
+ 520              		.loc 1 84 56 is_stmt 1 view -0
+ 521              		.cfi_startproc
+ 522              		@ args = 0, pretend = 0, frame = 0
+ 523              		@ frame_needed = 0, uses_anonymous_args = 0
+ 524              		@ link register save eliminated.
+  85:Core/Src/motor.c **** 
+  86:Core/Src/motor.c ****     
   87:Core/Src/motor.c **** 
-  88:Core/Src/motor.c **** DCMotor_Error Drive_DCMotor(const DCMotor_Instance_t* dcMotor){
- 529              		.loc 1 88 63 is_stmt 1 view -0
- 530              		.cfi_startproc
- 531              		@ args = 0, pretend = 0, frame = 0
- 532              		@ frame_needed = 0, uses_anonymous_args = 0
- 533              		@ link register save eliminated.
-  89:Core/Src/motor.c **** 
+  88:Core/Src/motor.c ****     return DC_MOTOR_OK;
+ 525              		.loc 1 88 5 view .LVU152
+  89:Core/Src/motor.c **** }
+ 526              		.loc 1 89 1 is_stmt 0 view .LVU153
+ 527 0000 0020     		movs	r0, #0
+ 528              	.LVL52:
+ 529              		.loc 1 89 1 view .LVU154
+ 530 0002 7047     		bx	lr
+ 531              		.cfi_endproc
+ 532              	.LFE134:
+ 534              		.section	.text.Drive_DCMotor,"ax",%progbits
+ 535              		.align	1
+ 536              		.global	Drive_DCMotor
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 14
+
+
+ 537              		.syntax unified
+ 538              		.thumb
+ 539              		.thumb_func
+ 541              	Drive_DCMotor:
+ 542              	.LVL53:
+ 543              	.LFB135:
   90:Core/Src/motor.c **** 
-  91:Core/Src/motor.c ****     return DC_MOTOR_OK;
- 534              		.loc 1 91 5 view .LVU152
-  92:Core/Src/motor.c **** }
- 535              		.loc 1 92 1 is_stmt 0 view .LVU153
- 536 0000 0020     		movs	r0, #0
- 537              	.LVL52:
- 538              		.loc 1 92 1 view .LVU154
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 14
+  91:Core/Src/motor.c **** DCMotor_Error Drive_DCMotor(const DCMotor_Instance_t* dcMotor, const uint8_t speed, DCMotor_Directi
+ 544              		.loc 1 91 107 is_stmt 1 view -0
+ 545              		.cfi_startproc
+ 546              		@ args = 0, pretend = 0, frame = 0
+ 547              		@ frame_needed = 0, uses_anonymous_args = 0
+ 548              		@ link register save eliminated.
+  92:Core/Src/motor.c **** 
+  93:Core/Src/motor.c ****     /* Assert Param */
+  94:Core/Src/motor.c ****     if(dcMotor == NULL)
+ 549              		.loc 1 94 5 view .LVU156
+ 550              		.loc 1 94 7 is_stmt 0 view .LVU157
+ 551 0000 0028     		cmp	r0, #0
+ 552 0002 00F09380 		beq	.L67
+ 553 0006 8446     		mov	ip, r0
+  95:Core/Src/motor.c ****         return DC_MOTOR_INSTANCE_ERR;
+  96:Core/Src/motor.c ****     else if(speed < dcMotor->Min_Speed)
+ 554              		.loc 1 96 10 is_stmt 1 view .LVU158
+ 555              		.loc 1 96 28 is_stmt 0 view .LVU159
+ 556 0008 8379     		ldrb	r3, [r0, #6]	@ zero_extendqisi2
+ 557              		.loc 1 96 12 view .LVU160
+ 558 000a 8B42     		cmp	r3, r1
+ 559 000c 00F29080 		bhi	.L68
+  97:Core/Src/motor.c ****         return DC_MOTOR_UNDER_RANGE;
+  98:Core/Src/motor.c ****     else if(speed > dcMotor->Max_Speed)
+ 560              		.loc 1 98 10 is_stmt 1 view .LVU161
+ 561              		.loc 1 98 28 is_stmt 0 view .LVU162
+ 562 0010 C079     		ldrb	r0, [r0, #7]	@ zero_extendqisi2
+ 563              	.LVL54:
+ 564              		.loc 1 98 12 view .LVU163
+ 565 0012 8842     		cmp	r0, r1
+ 566 0014 C0F08E80 		bcc	.L69
+  91:Core/Src/motor.c **** 
+ 567              		.loc 1 91 107 view .LVU164
+ 568 0018 30B4     		push	{r4, r5}
+ 569              		.cfi_def_cfa_offset 8
+ 570              		.cfi_offset 4, -8
+ 571              		.cfi_offset 5, -4
+  99:Core/Src/motor.c ****         return DC_MOTOR_ABOVE_RANGE;
+ 100:Core/Src/motor.c **** 
+ 101:Core/Src/motor.c ****     /* Map speed value to counter value */
+ 102:Core/Src/motor.c ****     uint16_t mappedValue = map(speed, dcMotor->Min_Speed, dcMotor->Max_Speed, 0, dcMotor->DC_Timer-
+ 572              		.loc 1 102 5 is_stmt 1 view .LVU165
+ 573              		.loc 1 102 28 is_stmt 0 view .LVU166
+ 574 001a 49B2     		sxtb	r1, r1
+ 575              		.loc 1 102 28 view .LVU167
+ 576 001c 5BB2     		sxtb	r3, r3
+ 577 001e 40B2     		sxtb	r0, r0
+ 578              		.loc 1 102 89 view .LVU168
+ 579 0020 DCF80040 		ldr	r4, [ip]
+ 580              		.loc 1 102 28 view .LVU169
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 15
 
 
- 539 0002 7047     		bx	lr
- 540              		.cfi_endproc
- 541              	.LFE135:
- 543              		.section	.text.Drive_DCMotor_Angle,"ax",%progbits
- 544              		.align	1
- 545              		.global	Drive_DCMotor_Angle
- 546              		.syntax unified
- 547              		.thumb
- 548              		.thumb_func
- 550              	Drive_DCMotor_Angle:
- 551              	.LVL53:
- 552              	.LFB136:
-  93:Core/Src/motor.c **** 
-  94:Core/Src/motor.c **** DCMotor_Error Drive_DCMotor_Angle(const DCMotor_Instance_t* dcMotor){
- 553              		.loc 1 94 69 is_stmt 1 view -0
- 554              		.cfi_startproc
- 555              		@ args = 0, pretend = 0, frame = 0
- 556              		@ frame_needed = 0, uses_anonymous_args = 0
- 557              		@ link register save eliminated.
-  95:Core/Src/motor.c **** 
-  96:Core/Src/motor.c ****     
-  97:Core/Src/motor.c ****     return DC_MOTOR_OK;
- 558              		.loc 1 97 5 view .LVU156
-  98:Core/Src/motor.c **** }
- 559              		.loc 1 98 1 is_stmt 0 view .LVU157
- 560 0000 0020     		movs	r0, #0
- 561              	.LVL54:
- 562              		.loc 1 98 1 view .LVU158
- 563 0002 7047     		bx	lr
- 564              		.cfi_endproc
- 565              	.LFE136:
- 567              		.section	.text.Actuator_Init,"ax",%progbits
- 568              		.align	1
- 569              		.global	Actuator_Init
- 570              		.syntax unified
- 571              		.thumb
- 572              		.thumb_func
- 574              	Actuator_Init:
- 575              	.LVL55:
- 576              	.LFB137:
-  99:Core/Src/motor.c **** 
- 100:Core/Src/motor.c **** //Actuator Functions
- 101:Core/Src/motor.c **** Actuator_Error Actuator_Init(Actuator_Instance_t* act){
- 577              		.loc 1 101 55 is_stmt 1 view -0
- 578              		.cfi_startproc
- 579              		@ args = 0, pretend = 0, frame = 0
- 580              		@ frame_needed = 0, uses_anonymous_args = 0
- 581              		@ link register save eliminated.
- 102:Core/Src/motor.c **** 
+ 581 0024 E568     		ldr	r5, [r4, #12]
+ 582              	.LVL55:
+ 583              	.LBB30:
+ 584              	.LBI30:
+  22:Core/Src/motor.c **** 
+ 585              		.loc 1 22 24 is_stmt 1 view .LVU170
+ 586              	.LBB31:
+  24:Core/Src/motor.c **** 		return x_min;
+ 587              		.loc 1 24 2 view .LVU171
+  24:Core/Src/motor.c **** 		return x_min;
+ 588              		.loc 1 24 4 is_stmt 0 view .LVU172
+ 589 0026 9942     		cmp	r1, r3
+ 590 0028 07DD     		ble	.L50
+  27:Core/Src/motor.c **** 		return x_max;
+ 591              		.loc 1 27 2 is_stmt 1 view .LVU173
+  27:Core/Src/motor.c **** 		return x_max;
+ 592              		.loc 1 27 4 is_stmt 0 view .LVU174
+ 593 002a 8142     		cmp	r1, r0
+ 594 002c 16DA     		bge	.L75
+  30:Core/Src/motor.c **** 
+ 595              		.loc 1 30 2 is_stmt 1 view .LVU175
+  30:Core/Src/motor.c **** 
+ 596              		.loc 1 30 12 is_stmt 0 view .LVU176
+ 597 002e C91A     		subs	r1, r1, r3
+ 598              	.LVL56:
+  30:Core/Src/motor.c **** 
+ 599              		.loc 1 30 21 view .LVU177
+ 600 0030 01FB05F5 		mul	r5, r1, r5
+ 601              	.LVL57:
+  30:Core/Src/motor.c **** 
+ 602              		.loc 1 30 52 view .LVU178
+ 603 0034 C01A     		subs	r0, r0, r3
+ 604              	.LVL58:
+  30:Core/Src/motor.c **** 
+ 605              		.loc 1 30 43 view .LVU179
+ 606 0036 B5FBF0F3 		udiv	r3, r5, r0
+ 607              	.LVL59:
+ 608              	.L50:
+  30:Core/Src/motor.c **** 
+ 609              		.loc 1 30 43 view .LVU180
+ 610              	.LBE31:
+ 611              	.LBE30:
  103:Core/Src/motor.c **** 
- 104:Core/Src/motor.c ****     return ACTUATOR_OK;
- 582              		.loc 1 104 5 view .LVU160
- 105:Core/Src/motor.c **** }
- 583              		.loc 1 105 1 is_stmt 0 view .LVU161
- 584 0000 0020     		movs	r0, #0
- 585              	.LVL56:
- 586              		.loc 1 105 1 view .LVU162
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 15
+ 104:Core/Src/motor.c ****     if(dir == CLOCKWISE){
+ 612              		.loc 1 104 5 is_stmt 1 view .LVU181
+ 613              		.loc 1 104 7 is_stmt 0 view .LVU182
+ 614 003a 002A     		cmp	r2, #0
+ 615 003c 39D1     		bne	.L52
+ 105:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
+ 616              		.loc 1 105 9 is_stmt 1 view .LVU183
+ 617 003e 9CF80410 		ldrb	r1, [ip, #4]	@ zero_extendqisi2
+ 618 0042 69B9     		cbnz	r1, .L53
+ 619              		.loc 1 105 9 is_stmt 0 discriminator 1 view .LVU184
+ 620 0044 2168     		ldr	r1, [r4]
+ 621 0046 9BB2     		uxth	r3, r3
+ 622              		.loc 1 105 9 discriminator 1 view .LVU185
+ 623 0048 4B63     		str	r3, [r1, #52]
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 16
 
 
- 587 0002 7047     		bx	lr
- 588              		.cfi_endproc
- 589              	.LFE137:
- 591              		.section	.text.Drive_Actuator,"ax",%progbits
- 592              		.align	1
- 593              		.global	Drive_Actuator
- 594              		.syntax unified
- 595              		.thumb
- 596              		.thumb_func
- 598              	Drive_Actuator:
- 599              	.LVL57:
- 600              	.LFB138:
- 106:Core/Src/motor.c **** 
- 107:Core/Src/motor.c **** Actuator_Error Drive_Actuator(const Actuator_Instance_t* act){
- 601              		.loc 1 107 62 is_stmt 1 view -0
- 602              		.cfi_startproc
- 603              		@ args = 0, pretend = 0, frame = 0
- 604              		@ frame_needed = 0, uses_anonymous_args = 0
- 605              		@ link register save eliminated.
- 108:Core/Src/motor.c **** 
- 109:Core/Src/motor.c **** 
- 110:Core/Src/motor.c ****     return ACTUATOR_OK;
- 606              		.loc 1 110 5 view .LVU164
- 111:Core/Src/motor.c **** }
- 607              		.loc 1 111 1 is_stmt 0 view .LVU165
- 608 0000 0020     		movs	r0, #0
- 609              	.LVL58:
- 610              		.loc 1 111 1 view .LVU166
- 611 0002 7047     		bx	lr
- 612              		.cfi_endproc
- 613              	.LFE138:
- 615              		.section	.bss.freqError,"aw",%nobits
- 616              		.set	.LANCHOR0,. + 0
- 619              	freqError:
- 620 0000 00       		.space	1
- 621              		.text
- 622              	.Letext0:
- 623              		.file 2 "c:\\users\\baske\\appdata\\roaming\\code\\user\\globalstorage\\bmd.stm32-for-vscode\\@xpa
- 624              		.file 3 "c:\\users\\baske\\appdata\\roaming\\code\\user\\globalstorage\\bmd.stm32-for-vscode\\@xpa
- 625              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f446xx.h"
- 626              		.file 5 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
- 627              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
- 628              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h"
- 629              		.file 8 "Core/Inc/motor.h"
- 630              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h"
-ARM GAS  C:\Users\baske\AppData\Local\Temp\cc41t0cx.s 			page 16
+ 624              	.LVL60:
+ 625              	.L54:
+ 106:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, 0);
+ 626              		.loc 1 106 9 is_stmt 1 view .LVU186
+ 627 004a 9CF80500 		ldrb	r0, [ip, #5]	@ zero_extendqisi2
+ 628 004e B8B9     		cbnz	r0, .L57
+ 629              		.loc 1 106 9 is_stmt 0 discriminator 1 view .LVU187
+ 630 0050 DCF80030 		ldr	r3, [ip]
+ 631 0054 1B68     		ldr	r3, [r3]
+ 632 0056 0022     		movs	r2, #0
+ 633              	.LVL61:
+ 634              		.loc 1 106 9 discriminator 1 view .LVU188
+ 635 0058 5A63     		str	r2, [r3, #52]
+ 636 005a 2DE0     		b	.L48
+ 637              	.LVL62:
+ 638              	.L75:
+ 639              	.LBB33:
+ 640              	.LBB32:
+  28:Core/Src/motor.c **** 
+ 641              		.loc 1 28 3 is_stmt 1 view .LVU189
+  28:Core/Src/motor.c **** 
+ 642              		.loc 1 28 10 is_stmt 0 view .LVU190
+ 643 005c 0346     		mov	r3, r0
+ 644              	.LVL63:
+  28:Core/Src/motor.c **** 
+ 645              		.loc 1 28 10 view .LVU191
+ 646 005e ECE7     		b	.L50
+ 647              	.LVL64:
+ 648              	.L53:
+  28:Core/Src/motor.c **** 
+ 649              		.loc 1 28 10 view .LVU192
+ 650              	.LBE32:
+ 651              	.LBE33:
+ 105:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
+ 652              		.loc 1 105 9 discriminator 2 view .LVU193
+ 653 0060 0429     		cmp	r1, #4
+ 654 0062 05D0     		beq	.L76
+ 105:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
+ 655              		.loc 1 105 9 discriminator 4 view .LVU194
+ 656 0064 0829     		cmp	r1, #8
+ 657 0066 07D0     		beq	.L77
+ 105:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
+ 658              		.loc 1 105 9 discriminator 7 view .LVU195
+ 659 0068 2168     		ldr	r1, [r4]
+ 660 006a 9BB2     		uxth	r3, r3
+ 105:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
+ 661              		.loc 1 105 9 discriminator 7 view .LVU196
+ 662 006c 0B64     		str	r3, [r1, #64]
+ 663 006e ECE7     		b	.L54
+ 664              	.L76:
+ 105:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
+ 665              		.loc 1 105 9 discriminator 3 view .LVU197
+ 666 0070 2168     		ldr	r1, [r4]
+ 667 0072 9BB2     		uxth	r3, r3
+ 105:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
+ 668              		.loc 1 105 9 discriminator 3 view .LVU198
+ 669 0074 8B63     		str	r3, [r1, #56]
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 17
+
+
+ 670 0076 E8E7     		b	.L54
+ 671              	.L77:
+ 105:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
+ 672              		.loc 1 105 9 discriminator 6 view .LVU199
+ 673 0078 2168     		ldr	r1, [r4]
+ 674 007a 9BB2     		uxth	r3, r3
+ 105:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
+ 675              		.loc 1 105 9 discriminator 6 view .LVU200
+ 676 007c CB63     		str	r3, [r1, #60]
+ 677 007e E4E7     		b	.L54
+ 678              	.LVL65:
+ 679              	.L57:
+ 680              		.loc 1 106 9 discriminator 2 view .LVU201
+ 681 0080 0428     		cmp	r0, #4
+ 682 0082 08D0     		beq	.L78
+ 683              		.loc 1 106 9 discriminator 4 view .LVU202
+ 684 0084 0828     		cmp	r0, #8
+ 685 0086 0DD0     		beq	.L79
+ 686              		.loc 1 106 9 discriminator 7 view .LVU203
+ 687 0088 DCF80030 		ldr	r3, [ip]
+ 688 008c 1B68     		ldr	r3, [r3]
+ 689 008e 0021     		movs	r1, #0
+ 690 0090 1964     		str	r1, [r3, #64]
+ 107:Core/Src/motor.c ****     }
+ 108:Core/Src/motor.c ****     else if(dir == COUNTER_CLOCKWISE){
+ 109:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, 0);
+ 110:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
+ 111:Core/Src/motor.c ****     }
+ 112:Core/Src/motor.c **** 
+ 113:Core/Src/motor.c ****     return DC_MOTOR_OK;
+ 691              		.loc 1 113 12 discriminator 7 view .LVU204
+ 692 0092 1046     		mov	r0, r2
+ 693 0094 10E0     		b	.L48
+ 694              	.L78:
+ 106:Core/Src/motor.c ****     }
+ 695              		.loc 1 106 9 discriminator 3 view .LVU205
+ 696 0096 DCF80030 		ldr	r3, [ip]
+ 697 009a 1B68     		ldr	r3, [r3]
+ 698 009c 0021     		movs	r1, #0
+ 699 009e 9963     		str	r1, [r3, #56]
+ 700              		.loc 1 113 12 discriminator 3 view .LVU206
+ 701 00a0 1046     		mov	r0, r2
+ 702 00a2 09E0     		b	.L48
+ 703              	.L79:
+ 106:Core/Src/motor.c ****     }
+ 704              		.loc 1 106 9 discriminator 6 view .LVU207
+ 705 00a4 DCF80030 		ldr	r3, [ip]
+ 706 00a8 1B68     		ldr	r3, [r3]
+ 707 00aa 0021     		movs	r1, #0
+ 708 00ac D963     		str	r1, [r3, #60]
+ 709              		.loc 1 113 12 discriminator 6 view .LVU208
+ 710 00ae 1046     		mov	r0, r2
+ 711 00b0 02E0     		b	.L48
+ 712              	.LVL66:
+ 713              	.L52:
+ 108:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, 0);
+ 714              		.loc 1 108 10 is_stmt 1 view .LVU209
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 18
+
+
+ 108:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, 0);
+ 715              		.loc 1 108 12 is_stmt 0 view .LVU210
+ 716 00b2 012A     		cmp	r2, #1
+ 717 00b4 02D0     		beq	.L80
+ 718              		.loc 1 113 12 view .LVU211
+ 719 00b6 0020     		movs	r0, #0
+ 720              	.LVL67:
+ 721              	.L48:
+ 114:Core/Src/motor.c **** }
+ 722              		.loc 1 114 1 view .LVU212
+ 723 00b8 30BC     		pop	{r4, r5}
+ 724              		.cfi_remember_state
+ 725              		.cfi_restore 5
+ 726              		.cfi_restore 4
+ 727              		.cfi_def_cfa_offset 0
+ 728 00ba 7047     		bx	lr
+ 729              	.LVL68:
+ 730              	.L80:
+ 731              		.cfi_restore_state
+ 109:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
+ 732              		.loc 1 109 9 is_stmt 1 view .LVU213
+ 733 00bc 9CF80420 		ldrb	r2, [ip, #4]	@ zero_extendqisi2
+ 734              	.LVL69:
+ 109:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
+ 735              		.loc 1 109 9 is_stmt 0 view .LVU214
+ 736 00c0 5AB9     		cbnz	r2, .L60
+ 109:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
+ 737              		.loc 1 109 9 discriminator 1 view .LVU215
+ 738 00c2 2268     		ldr	r2, [r4]
+ 739 00c4 0021     		movs	r1, #0
+ 740 00c6 5163     		str	r1, [r2, #52]
+ 741              	.L61:
+ 110:Core/Src/motor.c ****     }
+ 742              		.loc 1 110 9 is_stmt 1 view .LVU216
+ 743 00c8 9CF80500 		ldrb	r0, [ip, #5]	@ zero_extendqisi2
+ 744 00cc A8B9     		cbnz	r0, .L64
+ 110:Core/Src/motor.c ****     }
+ 745              		.loc 1 110 9 is_stmt 0 discriminator 1 view .LVU217
+ 746 00ce DCF80020 		ldr	r2, [ip]
+ 747 00d2 1268     		ldr	r2, [r2]
+ 748 00d4 9BB2     		uxth	r3, r3
+ 110:Core/Src/motor.c ****     }
+ 749              		.loc 1 110 9 discriminator 1 view .LVU218
+ 750 00d6 5363     		str	r3, [r2, #52]
+ 751 00d8 EEE7     		b	.L48
+ 752              	.L60:
+ 109:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
+ 753              		.loc 1 109 9 discriminator 2 view .LVU219
+ 754 00da 042A     		cmp	r2, #4
+ 755 00dc 05D0     		beq	.L81
+ 109:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
+ 756              		.loc 1 109 9 discriminator 4 view .LVU220
+ 757 00de 082A     		cmp	r2, #8
+ 758 00e0 07D0     		beq	.L82
+ 109:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
+ 759              		.loc 1 109 9 discriminator 7 view .LVU221
+ 760 00e2 2268     		ldr	r2, [r4]
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 19
+
+
+ 761 00e4 0021     		movs	r1, #0
+ 762 00e6 1164     		str	r1, [r2, #64]
+ 763 00e8 EEE7     		b	.L61
+ 764              	.L81:
+ 109:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
+ 765              		.loc 1 109 9 discriminator 3 view .LVU222
+ 766 00ea 2268     		ldr	r2, [r4]
+ 767 00ec 0021     		movs	r1, #0
+ 768 00ee 9163     		str	r1, [r2, #56]
+ 769 00f0 EAE7     		b	.L61
+ 770              	.L82:
+ 109:Core/Src/motor.c ****         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
+ 771              		.loc 1 109 9 discriminator 6 view .LVU223
+ 772 00f2 2268     		ldr	r2, [r4]
+ 773 00f4 0021     		movs	r1, #0
+ 774 00f6 D163     		str	r1, [r2, #60]
+ 775 00f8 E6E7     		b	.L61
+ 776              	.L64:
+ 110:Core/Src/motor.c ****     }
+ 777              		.loc 1 110 9 discriminator 2 view .LVU224
+ 778 00fa 0428     		cmp	r0, #4
+ 779 00fc 08D0     		beq	.L83
+ 110:Core/Src/motor.c ****     }
+ 780              		.loc 1 110 9 discriminator 4 view .LVU225
+ 781 00fe 0828     		cmp	r0, #8
+ 782 0100 0DD0     		beq	.L84
+ 110:Core/Src/motor.c ****     }
+ 783              		.loc 1 110 9 discriminator 7 view .LVU226
+ 784 0102 DCF80020 		ldr	r2, [ip]
+ 785 0106 1268     		ldr	r2, [r2]
+ 786 0108 9BB2     		uxth	r3, r3
+ 110:Core/Src/motor.c ****     }
+ 787              		.loc 1 110 9 discriminator 7 view .LVU227
+ 788 010a 1364     		str	r3, [r2, #64]
+ 113:Core/Src/motor.c **** }
+ 789              		.loc 1 113 12 discriminator 7 view .LVU228
+ 790 010c 0020     		movs	r0, #0
+ 791 010e D3E7     		b	.L48
+ 792              	.L83:
+ 110:Core/Src/motor.c ****     }
+ 793              		.loc 1 110 9 discriminator 3 view .LVU229
+ 794 0110 DCF80020 		ldr	r2, [ip]
+ 795 0114 1268     		ldr	r2, [r2]
+ 796 0116 9BB2     		uxth	r3, r3
+ 110:Core/Src/motor.c ****     }
+ 797              		.loc 1 110 9 discriminator 3 view .LVU230
+ 798 0118 9363     		str	r3, [r2, #56]
+ 113:Core/Src/motor.c **** }
+ 799              		.loc 1 113 12 discriminator 3 view .LVU231
+ 800 011a 0020     		movs	r0, #0
+ 801 011c CCE7     		b	.L48
+ 802              	.L84:
+ 110:Core/Src/motor.c ****     }
+ 803              		.loc 1 110 9 discriminator 6 view .LVU232
+ 804 011e DCF80020 		ldr	r2, [ip]
+ 805 0122 1268     		ldr	r2, [r2]
+ 806 0124 9BB2     		uxth	r3, r3
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 20
+
+
+ 110:Core/Src/motor.c ****     }
+ 807              		.loc 1 110 9 discriminator 6 view .LVU233
+ 808 0126 D363     		str	r3, [r2, #60]
+ 113:Core/Src/motor.c **** }
+ 809              		.loc 1 113 12 discriminator 6 view .LVU234
+ 810 0128 0020     		movs	r0, #0
+ 811 012a C5E7     		b	.L48
+ 812              	.LVL70:
+ 813              	.L67:
+ 814              		.cfi_def_cfa_offset 0
+ 815              		.cfi_restore 4
+ 816              		.cfi_restore 5
+  95:Core/Src/motor.c ****     else if(speed < dcMotor->Min_Speed)
+ 817              		.loc 1 95 16 view .LVU235
+ 818 012c 0320     		movs	r0, #3
+ 819              	.LVL71:
+  95:Core/Src/motor.c ****     else if(speed < dcMotor->Min_Speed)
+ 820              		.loc 1 95 16 view .LVU236
+ 821 012e 7047     		bx	lr
+ 822              	.LVL72:
+ 823              	.L68:
+  97:Core/Src/motor.c ****     else if(speed > dcMotor->Max_Speed)
+ 824              		.loc 1 97 16 view .LVU237
+ 825 0130 0120     		movs	r0, #1
+ 826              	.LVL73:
+  97:Core/Src/motor.c ****     else if(speed > dcMotor->Max_Speed)
+ 827              		.loc 1 97 16 view .LVU238
+ 828 0132 7047     		bx	lr
+ 829              	.L69:
+  99:Core/Src/motor.c **** 
+ 830              		.loc 1 99 16 view .LVU239
+ 831 0134 0220     		movs	r0, #2
+ 832              		.loc 1 114 1 view .LVU240
+ 833 0136 7047     		bx	lr
+ 834              		.cfi_endproc
+ 835              	.LFE135:
+ 837              		.section	.text.Drive_DCMotor_Angle,"ax",%progbits
+ 838              		.align	1
+ 839              		.global	Drive_DCMotor_Angle
+ 840              		.syntax unified
+ 841              		.thumb
+ 842              		.thumb_func
+ 844              	Drive_DCMotor_Angle:
+ 845              	.LVL74:
+ 846              	.LFB136:
+ 115:Core/Src/motor.c **** 
+ 116:Core/Src/motor.c **** DCMotor_Error Drive_DCMotor_Angle(const DCMotor_Instance_t* dcMotor){
+ 847              		.loc 1 116 69 is_stmt 1 view -0
+ 848              		.cfi_startproc
+ 849              		@ args = 0, pretend = 0, frame = 0
+ 850              		@ frame_needed = 0, uses_anonymous_args = 0
+ 851              		@ link register save eliminated.
+ 117:Core/Src/motor.c **** 
+ 118:Core/Src/motor.c ****     
+ 119:Core/Src/motor.c ****     return DC_MOTOR_OK;
+ 852              		.loc 1 119 5 view .LVU242
+ 120:Core/Src/motor.c **** }
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 21
+
+
+ 853              		.loc 1 120 1 is_stmt 0 view .LVU243
+ 854 0000 0020     		movs	r0, #0
+ 855              	.LVL75:
+ 856              		.loc 1 120 1 view .LVU244
+ 857 0002 7047     		bx	lr
+ 858              		.cfi_endproc
+ 859              	.LFE136:
+ 861              		.global	__aeabi_f2d
+ 862              		.global	__aeabi_ddiv
+ 863              		.global	__aeabi_i2d
+ 864              		.global	__aeabi_d2uiz
+ 865              		.section	.text.Actuator_Init,"ax",%progbits
+ 866              		.align	1
+ 867              		.global	Actuator_Init
+ 868              		.syntax unified
+ 869              		.thumb
+ 870              		.thumb_func
+ 872              	Actuator_Init:
+ 873              	.LVL76:
+ 874              	.LFB137:
+ 121:Core/Src/motor.c **** 
+ 122:Core/Src/motor.c **** //Actuator Functions
+ 123:Core/Src/motor.c **** Actuator_Error Actuator_Init(Actuator_Instance_t* act){
+ 875              		.loc 1 123 55 is_stmt 1 view -0
+ 876              		.cfi_startproc
+ 877              		@ args = 0, pretend = 0, frame = 0
+ 878              		@ frame_needed = 0, uses_anonymous_args = 0
+ 124:Core/Src/motor.c **** 
+ 125:Core/Src/motor.c ****     /* Makes sure Actuator Instance Struct and Actuator Config struct are initialzied */
+ 126:Core/Src/motor.c ****     if(act == NULL)
+ 879              		.loc 1 126 5 view .LVU246
+ 880              		.loc 1 126 7 is_stmt 0 view .LVU247
+ 881 0000 0028     		cmp	r0, #0
+ 882 0002 57D0     		beq	.L89
+ 123:Core/Src/motor.c **** 
+ 883              		.loc 1 123 55 view .LVU248
+ 884 0004 2DE9F843 		push	{r3, r4, r5, r6, r7, r8, r9, lr}
+ 885              		.cfi_def_cfa_offset 32
+ 886              		.cfi_offset 3, -32
+ 887              		.cfi_offset 4, -28
+ 888              		.cfi_offset 5, -24
+ 889              		.cfi_offset 6, -20
+ 890              		.cfi_offset 7, -16
+ 891              		.cfi_offset 8, -12
+ 892              		.cfi_offset 9, -8
+ 893              		.cfi_offset 14, -4
+ 894 0008 0446     		mov	r4, r0
+ 127:Core/Src/motor.c ****         return ACTUATOR_INSTANCE_ERROR;
+ 128:Core/Src/motor.c ****     else if(act->config == NULL)
+ 895              		.loc 1 128 10 is_stmt 1 view .LVU249
+ 896              		.loc 1 128 16 is_stmt 0 view .LVU250
+ 897 000a 8368     		ldr	r3, [r0, #8]
+ 898              		.loc 1 128 12 view .LVU251
+ 899 000c 002B     		cmp	r3, #0
+ 900 000e 53D0     		beq	.L90
+ 129:Core/Src/motor.c ****         return ACTUATOR_INSTANCE_ERROR;
+ 130:Core/Src/motor.c **** 
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 22
+
+
+ 131:Core/Src/motor.c ****     /* Calculate Timer Frequency */
+ 132:Core/Src/motor.c ****     uint16_t timFreq = 0;
+ 901              		.loc 1 132 5 is_stmt 1 view .LVU252
+ 902              	.LVL77:
+ 133:Core/Src/motor.c ****     timFreq = Get_Freq(HAL_RCC_GetSysClockFreq(), act->Act_Timer->Init.Prescaler, __HAL_TIM_GET_AUT
+ 903              		.loc 1 133 5 view .LVU253
+ 904              		.loc 1 133 15 is_stmt 0 view .LVU254
+ 905 0010 FFF7FEFF 		bl	HAL_RCC_GetSysClockFreq
+ 906              	.LVL78:
+ 907              		.loc 1 133 54 view .LVU255
+ 908 0014 2568     		ldr	r5, [r4]
+ 909              		.loc 1 133 83 view .LVU256
+ 910 0016 2E68     		ldr	r6, [r5]
+ 911 0018 F26A     		ldr	r2, [r6, #44]
+ 912              		.loc 1 133 15 view .LVU257
+ 913 001a 6968     		ldr	r1, [r5, #4]
+ 914 001c FFF7FEFF 		bl	Get_Freq
+ 915              	.LVL79:
+ 916              		.loc 1 133 13 view .LVU258
+ 917 0020 80B2     		uxth	r0, r0
+ 918              	.LVL80:
+ 134:Core/Src/motor.c **** 
+ 135:Core/Src/motor.c ****     /* Check if timer gives desired frequency */
+ 136:Core/Src/motor.c ****     if(timFreq != DESIRED_ACT_FREQ){
+ 919              		.loc 1 136 5 is_stmt 1 view .LVU259
+ 920              		.loc 1 136 7 is_stmt 0 view .LVU260
+ 921 0022 3228     		cmp	r0, #50
+ 922 0024 41D1     		bne	.L95
+ 137:Core/Src/motor.c ****         actFreqError = 1;
+ 138:Core/Src/motor.c ****         return ACTUATOR_FREQ_ERROR;
+ 139:Core/Src/motor.c ****     }
+ 140:Core/Src/motor.c **** 
+ 141:Core/Src/motor.c ****     /* Configure Min and Max counter based on user config */
+ 142:Core/Src/motor.c ****     act->Min_Cnt = act->config->Min_Pulse / (1 / (DESIRED_ACT_FREQ * pow(10, -6)) / (float)__HAL_TI
+ 923              		.loc 1 142 5 is_stmt 1 view .LVU261
+ 924              		.loc 1 142 23 is_stmt 0 view .LVU262
+ 925 0026 D4F80880 		ldr	r8, [r4, #8]
+ 926              		.loc 1 142 31 view .LVU263
+ 927 002a B8F80090 		ldrh	r9, [r8]
+ 928              		.loc 1 142 92 view .LVU264
+ 929 002e F06A     		ldr	r0, [r6, #44]
+ 930              	.LVL81:
+ 931              		.loc 1 142 85 view .LVU265
+ 932 0030 07EE900A 		vmov	s15, r0	@ int
+ 933 0034 F8EE677A 		vcvt.f32.u32	s15, s15
+ 934 0038 17EE900A 		vmov	r0, s15
+ 935 003c FFF7FEFF 		bl	__aeabi_f2d
+ 936              	.LVL82:
+ 937 0040 0246     		mov	r2, r0
+ 938 0042 0B46     		mov	r3, r1
+ 939              		.loc 1 142 83 view .LVU266
+ 940 0044 1FA1     		adr	r1, .L96+4
+ 941 0046 D1E90001 		ldrd	r0, [r1]
+ 942 004a FFF7FEFF 		bl	__aeabi_ddiv
+ 943              	.LVL83:
+ 944 004e 0646     		mov	r6, r0
+ 945 0050 0F46     		mov	r7, r1
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 23
+
+
+ 946              		.loc 1 142 43 view .LVU267
+ 947 0052 4846     		mov	r0, r9
+ 948 0054 FFF7FEFF 		bl	__aeabi_i2d
+ 949              	.LVL84:
+ 950 0058 3246     		mov	r2, r6
+ 951 005a 3B46     		mov	r3, r7
+ 952 005c FFF7FEFF 		bl	__aeabi_ddiv
+ 953              	.LVL85:
+ 954              		.loc 1 142 18 view .LVU268
+ 955 0060 FFF7FEFF 		bl	__aeabi_d2uiz
+ 956              	.LVL86:
+ 957 0064 A081     		strh	r0, [r4, #12]	@ movhi
+ 143:Core/Src/motor.c ****     act->Max_Cnt = act->config->Max_Pulse / (1 / (DESIRED_ACT_FREQ * pow(10, -6)) / (float)__HAL_TI
+ 958              		.loc 1 143 5 is_stmt 1 view .LVU269
+ 959              		.loc 1 143 31 is_stmt 0 view .LVU270
+ 960 0066 B8F80280 		ldrh	r8, [r8, #2]
+ 961              		.loc 1 143 92 view .LVU271
+ 962 006a 2B68     		ldr	r3, [r5]
+ 963 006c D86A     		ldr	r0, [r3, #44]
+ 964              		.loc 1 143 85 view .LVU272
+ 965 006e 07EE900A 		vmov	s15, r0	@ int
+ 966 0072 F8EE677A 		vcvt.f32.u32	s15, s15
+ 967 0076 17EE900A 		vmov	r0, s15
+ 968 007a FFF7FEFF 		bl	__aeabi_f2d
+ 969              	.LVL87:
+ 970 007e 0246     		mov	r2, r0
+ 971 0080 0B46     		mov	r3, r1
+ 972              		.loc 1 143 83 view .LVU273
+ 973 0082 10A1     		adr	r1, .L96+4
+ 974 0084 D1E90001 		ldrd	r0, [r1]
+ 975 0088 FFF7FEFF 		bl	__aeabi_ddiv
+ 976              	.LVL88:
+ 977 008c 0646     		mov	r6, r0
+ 978 008e 0F46     		mov	r7, r1
+ 979              		.loc 1 143 43 view .LVU274
+ 980 0090 4046     		mov	r0, r8
+ 981 0092 FFF7FEFF 		bl	__aeabi_i2d
+ 982              	.LVL89:
+ 983 0096 3246     		mov	r2, r6
+ 984 0098 3B46     		mov	r3, r7
+ 985 009a FFF7FEFF 		bl	__aeabi_ddiv
+ 986              	.LVL90:
+ 987              		.loc 1 143 18 view .LVU275
+ 988 009e FFF7FEFF 		bl	__aeabi_d2uiz
+ 989              	.LVL91:
+ 990 00a2 E081     		strh	r0, [r4, #14]	@ movhi
+ 144:Core/Src/motor.c **** 
+ 145:Core/Src/motor.c ****     return ACTUATOR_OK;
+ 991              		.loc 1 145 5 is_stmt 1 view .LVU276
+ 992              		.loc 1 145 12 is_stmt 0 view .LVU277
+ 993 00a4 0020     		movs	r0, #0
+ 994              	.L87:
+ 146:Core/Src/motor.c **** }
+ 995              		.loc 1 146 1 view .LVU278
+ 996 00a6 BDE8F883 		pop	{r3, r4, r5, r6, r7, r8, r9, pc}
+ 997              	.LVL92:
+ 998              	.L95:
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 24
+
+
+ 137:Core/Src/motor.c ****         return ACTUATOR_FREQ_ERROR;
+ 999              		.loc 1 137 9 is_stmt 1 view .LVU279
+ 137:Core/Src/motor.c ****         return ACTUATOR_FREQ_ERROR;
+ 1000              		.loc 1 137 22 is_stmt 0 view .LVU280
+ 1001 00aa 054B     		ldr	r3, .L96
+ 1002 00ac 0122     		movs	r2, #1
+ 1003 00ae 1A70     		strb	r2, [r3]
+ 138:Core/Src/motor.c ****     }
+ 1004              		.loc 1 138 9 is_stmt 1 view .LVU281
+ 138:Core/Src/motor.c ****     }
+ 1005              		.loc 1 138 16 is_stmt 0 view .LVU282
+ 1006 00b0 0420     		movs	r0, #4
+ 1007              	.LVL93:
+ 138:Core/Src/motor.c ****     }
+ 1008              		.loc 1 138 16 view .LVU283
+ 1009 00b2 F8E7     		b	.L87
+ 1010              	.LVL94:
+ 1011              	.L89:
+ 1012              		.cfi_def_cfa_offset 0
+ 1013              		.cfi_restore 3
+ 1014              		.cfi_restore 4
+ 1015              		.cfi_restore 5
+ 1016              		.cfi_restore 6
+ 1017              		.cfi_restore 7
+ 1018              		.cfi_restore 8
+ 1019              		.cfi_restore 9
+ 1020              		.cfi_restore 14
+ 127:Core/Src/motor.c ****     else if(act->config == NULL)
+ 1021              		.loc 1 127 16 view .LVU284
+ 1022 00b4 0320     		movs	r0, #3
+ 1023              	.LVL95:
+ 1024              		.loc 1 146 1 view .LVU285
+ 1025 00b6 7047     		bx	lr
+ 1026              	.LVL96:
+ 1027              	.L90:
+ 1028              		.cfi_def_cfa_offset 32
+ 1029              		.cfi_offset 3, -32
+ 1030              		.cfi_offset 4, -28
+ 1031              		.cfi_offset 5, -24
+ 1032              		.cfi_offset 6, -20
+ 1033              		.cfi_offset 7, -16
+ 1034              		.cfi_offset 8, -12
+ 1035              		.cfi_offset 9, -8
+ 1036              		.cfi_offset 14, -4
+ 129:Core/Src/motor.c **** 
+ 1037              		.loc 1 129 16 view .LVU286
+ 1038 00b8 0320     		movs	r0, #3
+ 1039              	.LVL97:
+ 129:Core/Src/motor.c **** 
+ 1040              		.loc 1 129 16 view .LVU287
+ 1041 00ba F4E7     		b	.L87
+ 1042              	.L97:
+ 1043 00bc AFF30080 		.align	3
+ 1044              	.L96:
+ 1045 00c0 00000000 		.word	.LANCHOR1
+ 1046 00c4 00000000 		.word	0
+ 1047 00c8 0088D340 		.word	1087604736
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 25
+
+
+ 1048              		.cfi_endproc
+ 1049              	.LFE137:
+ 1051              		.section	.text.Drive_Actuator,"ax",%progbits
+ 1052              		.align	1
+ 1053              		.global	Drive_Actuator
+ 1054              		.syntax unified
+ 1055              		.thumb
+ 1056              		.thumb_func
+ 1058              	Drive_Actuator:
+ 1059              	.LVL98:
+ 1060              	.LFB138:
+ 147:Core/Src/motor.c **** 
+ 148:Core/Src/motor.c **** Actuator_Error Drive_Actuator(const Actuator_Instance_t* act, const uint8_t length){
+ 1061              		.loc 1 148 84 is_stmt 1 view -0
+ 1062              		.cfi_startproc
+ 1063              		@ args = 0, pretend = 0, frame = 0
+ 1064              		@ frame_needed = 0, uses_anonymous_args = 0
+ 149:Core/Src/motor.c **** 
+ 150:Core/Src/motor.c ****     /* Asserting Parameters */
+ 151:Core/Src/motor.c ****     if(act == NULL)
+ 1065              		.loc 1 151 5 view .LVU289
+ 1066              		.loc 1 151 7 is_stmt 0 view .LVU290
+ 1067 0000 0028     		cmp	r0, #0
+ 1068 0002 3FD0     		beq	.L106
+ 1069 0004 0246     		mov	r2, r0
+ 152:Core/Src/motor.c ****         return ACTUATOR_INSTANCE_ERROR;
+ 153:Core/Src/motor.c ****     else if(act->config == NULL)
+ 1070              		.loc 1 153 10 is_stmt 1 view .LVU291
+ 1071              		.loc 1 153 16 is_stmt 0 view .LVU292
+ 1072 0006 8068     		ldr	r0, [r0, #8]
+ 1073              	.LVL99:
+ 1074              		.loc 1 153 12 view .LVU293
+ 1075 0008 0028     		cmp	r0, #0
+ 1076 000a 3DD0     		beq	.L107
+ 154:Core/Src/motor.c ****         return ACTUATOR_INSTANCE_ERROR;
+ 155:Core/Src/motor.c ****     else if(length < act->config->Min_Length)
+ 1077              		.loc 1 155 10 is_stmt 1 view .LVU294
+ 1078              		.loc 1 155 33 is_stmt 0 view .LVU295
+ 1079 000c 0379     		ldrb	r3, [r0, #4]	@ zero_extendqisi2
+ 1080              		.loc 1 155 12 view .LVU296
+ 1081 000e 8B42     		cmp	r3, r1
+ 1082 0010 3CD8     		bhi	.L108
+ 156:Core/Src/motor.c ****         return ACTUATOR_UNDER_RANGE;
+ 157:Core/Src/motor.c ****     else if(length > act->config->Max_Length)
+ 1083              		.loc 1 157 10 is_stmt 1 view .LVU297
+ 1084              		.loc 1 157 33 is_stmt 0 view .LVU298
+ 1085 0012 4079     		ldrb	r0, [r0, #5]	@ zero_extendqisi2
+ 1086              		.loc 1 157 12 view .LVU299
+ 1087 0014 8842     		cmp	r0, r1
+ 1088 0016 3BD3     		bcc	.L109
+ 148:Core/Src/motor.c **** 
+ 1089              		.loc 1 148 84 view .LVU300
+ 1090 0018 00B5     		push	{lr}
+ 1091              		.cfi_def_cfa_offset 4
+ 1092              		.cfi_offset 14, -4
+ 158:Core/Src/motor.c ****         return ACTUATOR_ABOVE_RANGE;
+ 159:Core/Src/motor.c **** 
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 26
+
+
+ 160:Core/Src/motor.c ****     /* Map length to counter value range */
+ 161:Core/Src/motor.c ****     uint16_t mappedLength = map(length, act->config->Min_Length, act->config->Max_Length, act->Min_
+ 1093              		.loc 1 161 5 is_stmt 1 view .LVU301
+ 1094              		.loc 1 161 29 is_stmt 0 view .LVU302
+ 1095 001a 49B2     		sxtb	r1, r1
+ 1096              		.loc 1 161 29 view .LVU303
+ 1097 001c 5BB2     		sxtb	r3, r3
+ 1098 001e 40B2     		sxtb	r0, r0
+ 1099              		.loc 1 161 94 view .LVU304
+ 1100 0020 B2F80CE0 		ldrh	lr, [r2, #12]
+ 1101              		.loc 1 161 108 view .LVU305
+ 1102 0024 B2F80EC0 		ldrh	ip, [r2, #14]
+ 1103              	.LVL100:
+ 1104              	.LBB34:
+ 1105              	.LBI34:
+  22:Core/Src/motor.c **** 
+ 1106              		.loc 1 22 24 is_stmt 1 view .LVU306
+ 1107              	.LBB35:
+  24:Core/Src/motor.c **** 		return x_min;
+ 1108              		.loc 1 24 2 view .LVU307
+  24:Core/Src/motor.c **** 		return x_min;
+ 1109              		.loc 1 24 4 is_stmt 0 view .LVU308
+ 1110 0028 9942     		cmp	r1, r3
+ 1111 002a 0BDD     		ble	.L101
+  27:Core/Src/motor.c **** 		return x_max;
+ 1112              		.loc 1 27 2 is_stmt 1 view .LVU309
+  27:Core/Src/motor.c **** 		return x_max;
+ 1113              		.loc 1 27 4 is_stmt 0 view .LVU310
+ 1114 002c 8142     		cmp	r1, r0
+ 1115 002e 11DA     		bge	.L114
+  30:Core/Src/motor.c **** 
+ 1116              		.loc 1 30 2 is_stmt 1 view .LVU311
+  30:Core/Src/motor.c **** 
+ 1117              		.loc 1 30 12 is_stmt 0 view .LVU312
+ 1118 0030 C91A     		subs	r1, r1, r3
+ 1119              	.LVL101:
+  30:Core/Src/motor.c **** 
+ 1120              		.loc 1 30 32 view .LVU313
+ 1121 0032 ACEB0E0C 		sub	ip, ip, lr
+ 1122              	.LVL102:
+  30:Core/Src/motor.c **** 
+ 1123              		.loc 1 30 21 view .LVU314
+ 1124 0036 0CFB01F1 		mul	r1, ip, r1
+  30:Core/Src/motor.c **** 
+ 1125              		.loc 1 30 52 view .LVU315
+ 1126 003a C01A     		subs	r0, r0, r3
+ 1127              	.LVL103:
+  30:Core/Src/motor.c **** 
+ 1128              		.loc 1 30 43 view .LVU316
+ 1129 003c B1FBF0F1 		udiv	r1, r1, r0
+  30:Core/Src/motor.c **** 
+ 1130              		.loc 1 30 61 view .LVU317
+ 1131 0040 0EEB0103 		add	r3, lr, r1
+ 1132              	.LVL104:
+ 1133              	.L101:
+  30:Core/Src/motor.c **** 
+ 1134              		.loc 1 30 61 view .LVU318
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 27
+
+
+ 1135              	.LBE35:
+ 1136              	.LBE34:
+ 162:Core/Src/motor.c ****     
+ 163:Core/Src/motor.c ****     /* Set New PWM Compare Value */
+ 164:Core/Src/motor.c ****     __HAL_TIM_SET_COMPARE(act->Act_Timer, act->Channel, mappedLength);
+ 1137              		.loc 1 164 5 is_stmt 1 view .LVU319
+ 1138 0044 1079     		ldrb	r0, [r2, #4]	@ zero_extendqisi2
+ 1139 0046 38B9     		cbnz	r0, .L103
+ 1140              		.loc 1 164 5 is_stmt 0 discriminator 1 view .LVU320
+ 1141 0048 1268     		ldr	r2, [r2]
+ 1142              	.LVL105:
+ 1143              		.loc 1 164 5 discriminator 1 view .LVU321
+ 1144 004a 1268     		ldr	r2, [r2]
+ 1145 004c 9BB2     		uxth	r3, r3
+ 1146              		.loc 1 164 5 discriminator 1 view .LVU322
+ 1147 004e 5363     		str	r3, [r2, #52]
+ 1148              	.LVL106:
+ 1149              	.L99:
+ 165:Core/Src/motor.c **** 
+ 166:Core/Src/motor.c ****     return ACTUATOR_OK;
+ 167:Core/Src/motor.c **** }
+ 1150              		.loc 1 167 1 view .LVU323
+ 1151 0050 5DF804FB 		ldr	pc, [sp], #4
+ 1152              	.LVL107:
+ 1153              	.L114:
+ 1154              	.LBB37:
+ 1155              	.LBB36:
+  28:Core/Src/motor.c **** 
+ 1156              		.loc 1 28 3 is_stmt 1 view .LVU324
+  28:Core/Src/motor.c **** 
+ 1157              		.loc 1 28 10 is_stmt 0 view .LVU325
+ 1158 0054 0346     		mov	r3, r0
+ 1159              	.LVL108:
+  28:Core/Src/motor.c **** 
+ 1160              		.loc 1 28 10 view .LVU326
+ 1161 0056 F5E7     		b	.L101
+ 1162              	.LVL109:
+ 1163              	.L103:
+  28:Core/Src/motor.c **** 
+ 1164              		.loc 1 28 10 view .LVU327
+ 1165              	.LBE36:
+ 1166              	.LBE37:
+ 164:Core/Src/motor.c **** 
+ 1167              		.loc 1 164 5 discriminator 2 view .LVU328
+ 1168 0058 0428     		cmp	r0, #4
+ 1169 005a 07D0     		beq	.L115
+ 164:Core/Src/motor.c **** 
+ 1170              		.loc 1 164 5 discriminator 4 view .LVU329
+ 1171 005c 0828     		cmp	r0, #8
+ 1172 005e 0BD0     		beq	.L116
+ 164:Core/Src/motor.c **** 
+ 1173              		.loc 1 164 5 discriminator 7 view .LVU330
+ 1174 0060 1268     		ldr	r2, [r2]
+ 1175              	.LVL110:
+ 164:Core/Src/motor.c **** 
+ 1176              		.loc 1 164 5 discriminator 7 view .LVU331
+ 1177 0062 1268     		ldr	r2, [r2]
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 28
+
+
+ 1178 0064 9BB2     		uxth	r3, r3
+ 164:Core/Src/motor.c **** 
+ 1179              		.loc 1 164 5 discriminator 7 view .LVU332
+ 1180 0066 1364     		str	r3, [r2, #64]
+ 166:Core/Src/motor.c **** }
+ 1181              		.loc 1 166 12 discriminator 7 view .LVU333
+ 1182 0068 0020     		movs	r0, #0
+ 1183 006a F1E7     		b	.L99
+ 1184              	.LVL111:
+ 1185              	.L115:
+ 164:Core/Src/motor.c **** 
+ 1186              		.loc 1 164 5 discriminator 3 view .LVU334
+ 1187 006c 1268     		ldr	r2, [r2]
+ 1188              	.LVL112:
+ 164:Core/Src/motor.c **** 
+ 1189              		.loc 1 164 5 discriminator 3 view .LVU335
+ 1190 006e 1268     		ldr	r2, [r2]
+ 1191 0070 9BB2     		uxth	r3, r3
+ 164:Core/Src/motor.c **** 
+ 1192              		.loc 1 164 5 discriminator 3 view .LVU336
+ 1193 0072 9363     		str	r3, [r2, #56]
+ 166:Core/Src/motor.c **** }
+ 1194              		.loc 1 166 12 discriminator 3 view .LVU337
+ 1195 0074 0020     		movs	r0, #0
+ 1196 0076 EBE7     		b	.L99
+ 1197              	.LVL113:
+ 1198              	.L116:
+ 164:Core/Src/motor.c **** 
+ 1199              		.loc 1 164 5 discriminator 6 view .LVU338
+ 1200 0078 1268     		ldr	r2, [r2]
+ 1201              	.LVL114:
+ 164:Core/Src/motor.c **** 
+ 1202              		.loc 1 164 5 discriminator 6 view .LVU339
+ 1203 007a 1268     		ldr	r2, [r2]
+ 1204 007c 9BB2     		uxth	r3, r3
+ 164:Core/Src/motor.c **** 
+ 1205              		.loc 1 164 5 discriminator 6 view .LVU340
+ 1206 007e D363     		str	r3, [r2, #60]
+ 166:Core/Src/motor.c **** }
+ 1207              		.loc 1 166 12 discriminator 6 view .LVU341
+ 1208 0080 0020     		movs	r0, #0
+ 1209 0082 E5E7     		b	.L99
+ 1210              	.LVL115:
+ 1211              	.L106:
+ 1212              		.cfi_def_cfa_offset 0
+ 1213              		.cfi_restore 14
+ 152:Core/Src/motor.c ****     else if(act->config == NULL)
+ 1214              		.loc 1 152 16 view .LVU342
+ 1215 0084 0320     		movs	r0, #3
+ 1216              	.LVL116:
+ 152:Core/Src/motor.c ****     else if(act->config == NULL)
+ 1217              		.loc 1 152 16 view .LVU343
+ 1218 0086 7047     		bx	lr
+ 1219              	.LVL117:
+ 1220              	.L107:
+ 154:Core/Src/motor.c ****     else if(length < act->config->Min_Length)
+ 1221              		.loc 1 154 16 view .LVU344
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 29
+
+
+ 1222 0088 0320     		movs	r0, #3
+ 1223 008a 7047     		bx	lr
+ 1224              	.L108:
+ 156:Core/Src/motor.c ****     else if(length > act->config->Max_Length)
+ 1225              		.loc 1 156 16 view .LVU345
+ 1226 008c 0120     		movs	r0, #1
+ 1227 008e 7047     		bx	lr
+ 1228              	.L109:
+ 158:Core/Src/motor.c **** 
+ 1229              		.loc 1 158 16 view .LVU346
+ 1230 0090 0220     		movs	r0, #2
+ 1231              		.loc 1 167 1 view .LVU347
+ 1232 0092 7047     		bx	lr
+ 1233              		.cfi_endproc
+ 1234              	.LFE138:
+ 1236              		.section	.bss.actFreqError,"aw",%nobits
+ 1237              		.set	.LANCHOR1,. + 0
+ 1240              	actFreqError:
+ 1241 0000 00       		.space	1
+ 1242              		.section	.bss.servoFreqError,"aw",%nobits
+ 1243              		.set	.LANCHOR0,. + 0
+ 1246              	servoFreqError:
+ 1247 0000 00       		.space	1
+ 1248              		.text
+ 1249              	.Letext0:
+ 1250              		.file 2 "c:\\users\\baske\\appdata\\roaming\\code\\user\\globalstorage\\bmd.stm32-for-vscode\\@xpa
+ 1251              		.file 3 "c:\\users\\baske\\appdata\\roaming\\code\\user\\globalstorage\\bmd.stm32-for-vscode\\@xpa
+ 1252              		.file 4 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f446xx.h"
+ 1253              		.file 5 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 1254              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 1255              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h"
+ 1256              		.file 8 "Core/Inc/motor.h"
+ 1257              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h"
+ARM GAS  C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s 			page 30
 
 
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 motor.c
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:20     .text.Get_Freq:0000000000000000 $t
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:25     .text.Get_Freq:0000000000000000 Get_Freq
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:51     .text.Drive_Servo:0000000000000000 $t
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:57     .text.Drive_Servo:0000000000000000 Drive_Servo
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:375    .text.Drive_Servo:00000000000000f4 $d
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:380    .text.Servo_Init:0000000000000000 $t
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:386    .text.Servo_Init:0000000000000000 Servo_Init
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:491    .text.Servo_Init:000000000000006c $d
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:496    .text.DCMotor_Init:0000000000000000 $t
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:502    .text.DCMotor_Init:0000000000000000 DCMotor_Init
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:520    .text.Drive_DCMotor:0000000000000000 $t
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:526    .text.Drive_DCMotor:0000000000000000 Drive_DCMotor
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:544    .text.Drive_DCMotor_Angle:0000000000000000 $t
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:550    .text.Drive_DCMotor_Angle:0000000000000000 Drive_DCMotor_Angle
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:568    .text.Actuator_Init:0000000000000000 $t
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:574    .text.Actuator_Init:0000000000000000 Actuator_Init
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:592    .text.Drive_Actuator:0000000000000000 $t
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:598    .text.Drive_Actuator:0000000000000000 Drive_Actuator
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:619    .bss.freqError:0000000000000000 freqError
-C:\Users\baske\AppData\Local\Temp\cc41t0cx.s:620    .bss.freqError:0000000000000000 $d
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:20     .text.Get_Freq:0000000000000000 $t
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:25     .text.Get_Freq:0000000000000000 Get_Freq
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:51     .text.Drive_Servo:0000000000000000 $t
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:57     .text.Drive_Servo:0000000000000000 Drive_Servo
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:375    .text.Drive_Servo:00000000000000f4 $d
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:380    .text.Servo_Init:0000000000000000 $t
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:386    .text.Servo_Init:0000000000000000 Servo_Init
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:506    .text.Servo_Init:0000000000000070 $d
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:511    .text.DCMotor_Init:0000000000000000 $t
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:517    .text.DCMotor_Init:0000000000000000 DCMotor_Init
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:535    .text.Drive_DCMotor:0000000000000000 $t
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:541    .text.Drive_DCMotor:0000000000000000 Drive_DCMotor
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:838    .text.Drive_DCMotor_Angle:0000000000000000 $t
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:844    .text.Drive_DCMotor_Angle:0000000000000000 Drive_DCMotor_Angle
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:866    .text.Actuator_Init:0000000000000000 $t
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:872    .text.Actuator_Init:0000000000000000 Actuator_Init
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:1045   .text.Actuator_Init:00000000000000c0 $d
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:1052   .text.Drive_Actuator:0000000000000000 $t
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:1058   .text.Drive_Actuator:0000000000000000 Drive_Actuator
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:1240   .bss.actFreqError:0000000000000000 actFreqError
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:1241   .bss.actFreqError:0000000000000000 $d
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:1246   .bss.servoFreqError:0000000000000000 servoFreqError
+C:\Users\baske\AppData\Local\Temp\ccv0hyBS.s:1247   .bss.servoFreqError:0000000000000000 $d
 
 UNDEFINED SYMBOLS
 HAL_RCC_GetSysClockFreq
+__aeabi_f2d
+__aeabi_ddiv
+__aeabi_i2d
+__aeabi_d2uiz

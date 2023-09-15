@@ -69,6 +69,12 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define Actuator_Pin GPIO_PIN_6
+#define Actuator_GPIO_Port GPIOA
+#define SERVO1_Pin GPIO_PIN_7
+#define SERVO1_GPIO_Port GPIOA
+#define SERVO2_Pin GPIO_PIN_0
+#define SERVO2_GPIO_Port GPIOB
 #define PWM1_Pin GPIO_PIN_14
 #define PWM1_GPIO_Port GPIOB
 #define PWM2_Pin GPIO_PIN_15

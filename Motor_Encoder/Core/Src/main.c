@@ -25,7 +25,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "BNO055.h"
+#include "motor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +58,23 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/* Servo Motor Struct */
+Servo_Config_t servoConfig;
+Servo_Instance_t servoInstance;
+
+/* Actuator Struct */
+Actuator_Config_t actConfig;
+Actuator_Instance_t actInstance;
+
+/* DCMotor Struct */
+
+
+
+/* General Motor Var */
+Servo_Error servoError;
+Actuator_Error actError;
+DCMotor_Error dcError;
 
 /* USER CODE END 0 */
 
@@ -92,7 +110,30 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM5_Init();
   MX_TIM12_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+
+  servoConfig.minDuty   = 0.025;
+  servoConfig.maxDuty   = 0.125;
+  servoConfig.minAngle  = -90;
+  servoConfig.minAngle  = 90;
+
+  servoInstance.htim    = &htim3;
+  servoInstance.channel = TIM_CHANNEL_2;
+  servoInstance.config  = &servoConfig;
+
+  actConfig.Min_Pulse   = 900;
+  actConfig.Max_Pulse   = 2100;
+  actConfig.Min_Length  = 0;
+  actConfig.Max_Length  = 30;
+
+  actInstance.Act_Timer = &htim3;
+  actInstance.Channel   = TIM_CHANNEL_1;
+  actInstance.config    = &actConfig;
+
+
+
+  Actuator_Init(&actInstance);
 
   /* USER CODE END 2 */
 
