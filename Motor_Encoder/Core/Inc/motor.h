@@ -71,22 +71,26 @@ typedef struct{
 } Servo_Instance_t;
 
 //DC Motor Struct
-typedef struct DCMotor_Struct{
+typedef struct{
+	uint8_t Min_Speed;						//Percentage Based
+	uint8_t Max_Speed;						//Percentage Based
+} DCMotor_Config_t;
+
+typedef struct{
 	TIM_HandleTypeDef* DC_Timer;
 	uint8_t IN1_Channel;
 	uint8_t IN2_Channel;
-	uint8_t Min_Speed;                      //Percentage Based
-	uint8_t Max_Speed;                      //Percentage Based
+	uint16_t Min_Cnt;                      
+	uint16_t Max_Cnt;   
+	DCMotor_Config_t* config;                   
 } DCMotor_Instance_t;
 
 //Actuator Struct
 typedef struct{
-
     uint16_t Min_Pulse;                     //uS Based
     uint16_t Max_Pulse;                     //uS Based
     uint8_t Min_Length;                     //mm Based
     uint8_t Max_Length;                     //mm Based
-
 } Actuator_Config_t;
 
 typedef struct 

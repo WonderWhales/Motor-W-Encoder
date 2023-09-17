@@ -19,7 +19,7 @@ static uint32_t Get_Freq(uint32_t systemClk, uint32_t timerPrescaler, uint32_t t
     return (systemClk / (timerPrescaler+1)) / (timerPeriod+1);
 }
 
-static inline uint32_t map(int8_t x, int8_t x_min, int8_t x_max, uint32_t out_min, uint32_t out_max){
+static inline int32_t map(int32_t x, int32_t x_min, int32_t x_max, int32_t out_min, int32_t out_max){
 
 	if(x <= x_min)
 		return x_min;
@@ -54,6 +54,10 @@ Servo_Error Servo_Init(Servo_Instance_t* servo){
 	servo->minCnt = servo->config->minDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
 	servo->maxCnt = servo->config->maxDuty * __HAL_TIM_GET_AUTORELOAD(servo->htim);
 
+    /* Start PWM Signal */
+    HAL_TIM_PWM_Start(servo->htim, servo->channel);
+    HAL_TIM_GenerateEvent(servo->htim, TIM_EventSource_Update);     //Sync Counter
+
 	/* Zero Out SERVO */
 	Drive_Servo(servo, 0);
 
@@ -76,6 +80,7 @@ Servo_Error Drive_Servo(const Servo_Instance_t* servo, const int8_t angle){
 
 	/* Set New Compare Value */
 	__HAL_TIM_SET_COMPARE(servo->htim, servo->channel, map(angle, servo->config->minAngle, servo->config->maxAngle, servo->minCnt, servo->maxCnt));
+    HAL_TIM_GenerateEvent(servo->htim, TIM_EventSource_Update);
 
     return SERVO_OK;
 }
@@ -83,7 +88,22 @@ Servo_Error Drive_Servo(const Servo_Instance_t* servo, const int8_t angle){
 //DC Motor Functions
 DCMotor_Error DCMotor_Init(DCMotor_Instance_t* dcMotor){
 
-    
+    /* Assert Param */
+    if(dcMotor == NULL)
+        return DC_MOTOR_INSTANCE_ERR;
+    else if(dcMotor->config == NULL)
+        return DC_MOTOR_INSTANCE_ERR;
+
+    /* Calculate Min and Max counter value based on user config */
+    dcMotor->Min_Cnt = __HAL_TIM_GET_AUTORELOAD(dcMotor->DC_Timer) * (float)(dcMotor->config->Min_Speed / 100.0);
+    dcMotor->Max_Cnt = __HAL_TIM_GET_AUTORELOAD(dcMotor->DC_Timer) * (float)(dcMotor->config->Max_Speed / 100.0);
+
+    /* Start PWM Signal */
+    HAL_TIM_PWM_Start(dcMotor->DC_Timer, dcMotor->IN1_Channel);
+    HAL_TIM_PWM_Start(dcMotor->DC_Timer, dcMotor->IN2_Channel);
+    HAL_TIM_GenerateEvent(dcMotor->DC_Timer, TIM_EventSource_Update);       //Sync Counter
+
+    /* Any Encoder Initialization (WIP) */
 
     return DC_MOTOR_OK;
 }
@@ -93,13 +113,15 @@ DCMotor_Error Drive_DCMotor(const DCMotor_Instance_t* dcMotor, const uint8_t spe
     /* Assert Param */
     if(dcMotor == NULL)
         return DC_MOTOR_INSTANCE_ERR;
-    else if(speed < dcMotor->Min_Speed)
+    else if(dcMotor->config == NULL)
+        return DC_MOTOR_INSTANCE_ERR;
+    else if(speed < dcMotor->config->Min_Speed)
         return DC_MOTOR_UNDER_RANGE;
-    else if(speed > dcMotor->Max_Speed)
+    else if(speed > dcMotor->config->Max_Speed)
         return DC_MOTOR_ABOVE_RANGE;
 
     /* Map speed value to counter value */
-    uint16_t mappedValue = map(speed, dcMotor->Min_Speed, dcMotor->Max_Speed, 0, dcMotor->DC_Timer->Init.Period);
+    uint16_t mappedValue = map(speed, dcMotor->config->Min_Speed, dcMotor->config->Max_Speed, dcMotor->Min_Cnt, dcMotor->Max_Cnt);
 
     if(dir == CLOCKWISE){
         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, mappedValue);
@@ -110,9 +132,12 @@ DCMotor_Error Drive_DCMotor(const DCMotor_Instance_t* dcMotor, const uint8_t spe
         __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, mappedValue);
     }
 
+    HAL_TIM_GenerateEvent(dcMotor->DC_Timer, TIM_EventSource_Update);       //Sync Counter
+
     return DC_MOTOR_OK;
 }
 
+//WIP
 DCMotor_Error Drive_DCMotor_Angle(const DCMotor_Instance_t* dcMotor){
 
     
@@ -142,6 +167,11 @@ Actuator_Error Actuator_Init(Actuator_Instance_t* act){
     act->Min_Cnt = act->config->Min_Pulse / (1 / (DESIRED_ACT_FREQ * pow(10, -6)) / (float)__HAL_TIM_GET_AUTORELOAD(act->Act_Timer));
     act->Max_Cnt = act->config->Max_Pulse / (1 / (DESIRED_ACT_FREQ * pow(10, -6)) / (float)__HAL_TIM_GET_AUTORELOAD(act->Act_Timer));
 
+    /* Start Actuator PWM Signal */
+    __HAL_TIM_SET_COMPARE(act->Act_Timer, act->Channel, act->Min_Cnt);
+    HAL_TIM_PWM_Start(act->Act_Timer, act->Channel);
+    HAL_TIM_GenerateEvent(act->Act_Timer, TIM_EventSource_Update);      //Sync Coutner
+
     return ACTUATOR_OK;
 }
 
@@ -162,6 +192,8 @@ Actuator_Error Drive_Actuator(const Actuator_Instance_t* act, const uint8_t leng
     
     /* Set New PWM Compare Value */
     __HAL_TIM_SET_COMPARE(act->Act_Timer, act->Channel, mappedLength);
+
+    HAL_TIM_GenerateEvent(act->Act_Timer, TIM_EventSource_Update);      //Sync Counter
 
     return ACTUATOR_OK;
 }

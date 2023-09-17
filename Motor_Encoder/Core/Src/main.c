@@ -68,8 +68,8 @@ Actuator_Config_t actConfig;
 Actuator_Instance_t actInstance;
 
 /* DCMotor Struct */
-
-
+DCMotor_Config_t dcMotorConfig;
+DCMotor_Instance_t dcMotor;
 
 /* General Motor Var */
 Servo_Error servoError;
@@ -122,6 +122,12 @@ int main(void)
   servoInstance.channel = TIM_CHANNEL_2;
   servoInstance.config  = &servoConfig;
 
+  servoError = Servo_Init(&servoInstance);
+  if(servoError != SERVO_OK){
+    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+    while(1);
+  }
+
   actConfig.Min_Pulse   = 900;
   actConfig.Max_Pulse   = 2100;
   actConfig.Min_Length  = 0;
@@ -131,9 +137,26 @@ int main(void)
   actInstance.Channel   = TIM_CHANNEL_1;
   actInstance.config    = &actConfig;
 
-
+  actError = Actuator_Init(&actInstance);
+  if(actError != ACTUATOR_OK){
+    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+    while(1);
+  }
 
   Actuator_Init(&actInstance);
+
+  dcMotorConfig.Min_Speed = 0;
+  dcMotorConfig.Max_Speed = 100;
+
+  dcMotor.DC_Timer      = &htim12;
+  dcMotor.IN1_Channel   = TIM_CHANNEL_1;
+  dcMotor.IN2_Channel   = TIM_CHANNEL_2;
+  dcMotor.config        = &dcMotorConfig;
+  
+  DCMotor_Init(&dcMotor);
+
+  HAL_TIM_PWM_Start(dcMotor.DC_Timer, dcMotor.IN1_Channel);
+  HAL_TIM_PWM_Start(dcMotor.DC_Timer, dcMotor.IN2_Channel);
 
   /* USER CODE END 2 */
 
@@ -141,6 +164,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    Drive_DCMotor(&dcMotor, 40, CLOCKWISE);
+    HAL_Delay(5000);
+    Drive_DCMotor(&dcMotor, 0, CLOCKWISE);
+    HAL_Delay(2000);
+    Drive_DCMotor(&dcMotor, 42, COUNTER_CLOCKWISE);
+    HAL_Delay(5000);
+    Drive_DCMotor(&dcMotor, 0, COUNTER_CLOCKWISE);
+    HAL_Delay(2000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
