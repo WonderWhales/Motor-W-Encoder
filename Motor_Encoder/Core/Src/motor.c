@@ -12,8 +12,10 @@
 #include "motor.h"
 #include <math.h>
 
-static char servoFreqError = 0;
-static char actFreqError = 0;
+static char servoFreqError      = 0;
+static char actFreqError        = 0;
+static int32_t currEncodeCnt    = 0;
+static int16_t currAngle        = 0;
 
 static uint32_t Get_Freq(uint32_t systemClk, uint32_t timerPrescaler, uint32_t timerPeriod){
     return (systemClk / (timerPrescaler+1)) / (timerPeriod+1);
@@ -88,6 +90,8 @@ Servo_Error Drive_Servo(const Servo_Instance_t* servo, const int8_t angle){
 //DC Motor Functions
 DCMotor_Error DCMotor_Init(DCMotor_Instance_t* dcMotor){
 
+    HAL_StatusTypeDef error;
+
     /* Assert Param */
     if(dcMotor == NULL)
         return DC_MOTOR_INSTANCE_ERR;
@@ -99,11 +103,15 @@ DCMotor_Error DCMotor_Init(DCMotor_Instance_t* dcMotor){
     dcMotor->Max_Cnt = __HAL_TIM_GET_AUTORELOAD(dcMotor->DC_Timer) * (float)(dcMotor->config->Max_Speed / 100.0);
 
     /* Start PWM Signal */
-    HAL_TIM_PWM_Start(dcMotor->DC_Timer, dcMotor->IN1_Channel);
-    HAL_TIM_PWM_Start(dcMotor->DC_Timer, dcMotor->IN2_Channel);
-    HAL_TIM_GenerateEvent(dcMotor->DC_Timer, TIM_EventSource_Update);       //Sync Counter
+    error  = HAL_TIM_PWM_Start(dcMotor->DC_Timer, dcMotor->IN1_Channel);
+    error |= HAL_TIM_PWM_Start(dcMotor->DC_Timer, dcMotor->IN2_Channel);
+    error |= HAL_TIM_GenerateEvent(dcMotor->DC_Timer, TIM_EventSource_Update);       //Sync Counter
 
-    /* Any Encoder Initialization (WIP) */
+    /* Error Handling */
+    if(error != HAL_OK){
+        HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+        while(1);
+    }
 
     return DC_MOTOR_OK;
 }
@@ -137,10 +145,80 @@ DCMotor_Error Drive_DCMotor(const DCMotor_Instance_t* dcMotor, const uint8_t spe
     return DC_MOTOR_OK;
 }
 
-//WIP
-DCMotor_Error Drive_DCMotor_Angle(const DCMotor_Instance_t* dcMotor){
+DCMotor_Error Stop_DCMotor(const DCMotor_Instance_t* dcMotor){
 
+    /* Assert Param */
+    if(dcMotor == NULL)
+        return DC_MOTOR_INSTANCE_ERR;
+    else if(dcMotor->config == NULL)
+        return DC_MOTOR_INSTANCE_ERR;
+
+    //Set Both Compare to 0 for 0% power
+    __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN1_Channel, 0);
+    __HAL_TIM_SET_COMPARE(dcMotor->DC_Timer, dcMotor->IN2_Channel, 0);
+
+    return DC_MOTOR_OK;
+}
+
+//DC Motor W Encoder Functions
+DCMotor_Error DCMotor_Encoder_Init(DCMotor_Encoder_Instance_t* encMotor){
+
+    HAL_StatusTypeDef error;
+
+    /* Assert Param */
+    if((encMotor == NULL) || (encMotor->encConfig == NULL) || (encMotor->motorInstance == NULL))
+        return DC_MOTOR_INSTANCE_ERR;
+
+    /* Set Encoder Default Counter Value */
+    __HAL_TIM_SET_COUNTER(encMotor->Encoder_Timer, encMotor->encConfig->Default_Counter);
+    error = HAL_TIM_Encoder_Start(encMotor->Encoder_Timer, TIM_CHANNEL_ALL);
+
+    /* Error Handling */
+    if(error != HAL_OK){
+        HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+        while(1);
+    }
+
+    return DC_MOTOR_OK;
+
+}
+
+DCMotor_Error Drive_DCMotor_Angle(const DCMotor_Encoder_Instance_t* encMotor, int16_t angle){
+
+    DCMotor_Error error;
+    uint32_t desiredCnt;
+    uint32_t angle_to_counter = 0;
+
+    /* Assert Param */
+    if((encMotor == NULL) || (encMotor->encConfig == NULL) || (encMotor->motorInstance == NULL))
+        return DC_MOTOR_OK;
+    else if(angle > encMotor->encConfig->Max_Angle)
+        return DC_MOTOR_ABOVE_RANGE;
+    else if(angle < encMotor->encConfig->Min_Angle)
+        return DC_MOTOR_UNDER_RANGE;
+
+    /* Default Parameter Arguments */
+    if(angle == 0)
+        desiredCnt = encMotor->encConfig->Default_Counter;
+    else if(angle == 360)
+        desiredCnt == encMotor->encConfig->Default_Counter * 2;
+    else if(angle == -360)
+        desiredCnt == 0;
+    else{
+        angle_to_counter = angle / encMotor->encConfig->Degree_Per_Pulse;
+        if(angle < 0)
+            desiredCnt -= angle_to_counter;
+        else
+            desiredCnt += angle_to_counter;
+    }
+
+    /* Poll until angle is detected */
     
+
+    /* Update Control Variable */
+    currAngle += angle;
+    currEncodeCnt = __HAL_TIM_GET_COUNTER(encMotor->Encoder_Timer);
+
     return DC_MOTOR_OK;
 }
 

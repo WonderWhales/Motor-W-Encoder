@@ -76,6 +76,10 @@ Servo_Error servoError;
 Actuator_Error actError;
 DCMotor_Error dcError;
 
+uint32_t encoderCnt = 0;
+char motorDone = 0;
+#define defaultValue (71050U)
+#define rotationValue (35525U)
 /* USER CODE END 0 */
 
 /**
@@ -155,8 +159,16 @@ int main(void)
   
   DCMotor_Init(&dcMotor);
 
-  HAL_TIM_PWM_Start(dcMotor.DC_Timer, dcMotor.IN1_Channel);
-  HAL_TIM_PWM_Start(dcMotor.DC_Timer, dcMotor.IN2_Channel);
+  __HAL_TIM_SET_COUNTER(&htim5, rotationValue);
+  HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
+
+  encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+  dcError = Drive_DCMotor(&dcMotor, 45, CLOCKWISE);
+  if(dcError != DC_MOTOR_OK){
+    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+    while(1);
+  }
+  HAL_Delay(500);
 
   /* USER CODE END 2 */
 
@@ -164,14 +176,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    Drive_DCMotor(&dcMotor, 40, CLOCKWISE);
-    HAL_Delay(5000);
-    Drive_DCMotor(&dcMotor, 0, CLOCKWISE);
-    HAL_Delay(2000);
-    Drive_DCMotor(&dcMotor, 42, COUNTER_CLOCKWISE);
-    HAL_Delay(5000);
-    Drive_DCMotor(&dcMotor, 0, COUNTER_CLOCKWISE);
-    HAL_Delay(2000);
+    encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+    if(encoderCnt >= 44406){
+      Stop_DCMotor(&dcMotor);
+      HAL_Delay(1000);
+      dcError = Drive_DCMotor(&dcMotor, 42, COUNTER_CLOCKWISE);
+      while(!motorDone){
+        encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+        if(encoderCnt <= 35525){
+          Stop_DCMotor(&dcMotor);
+          HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+          motorDone = 1;
+        }
+      }
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

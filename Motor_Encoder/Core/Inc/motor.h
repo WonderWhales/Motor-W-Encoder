@@ -77,20 +77,35 @@ typedef struct{
 } DCMotor_Config_t;
 
 typedef struct{
-	TIM_HandleTypeDef* DC_Timer;
-	uint8_t IN1_Channel;
-	uint8_t IN2_Channel;
-	uint16_t Min_Cnt;                      
-	uint16_t Max_Cnt;   
-	DCMotor_Config_t* config;                   
+	TIM_HandleTypeDef* 	DC_Timer;
+	uint8_t 			IN1_Channel;
+	uint8_t 			IN2_Channel;
+	uint16_t			Min_Cnt;                      
+	uint16_t			Max_Cnt;   
+	DCMotor_Config_t* 	config;                   
 } DCMotor_Instance_t;
+
+//DC Motor W Encoder Structs
+typedef struct{
+	uint32_t 	Default_Counter;
+	float 		Degree_Per_Pulse;
+	int16_t 	Current_Angle;
+	int16_t 	Min_Angle;
+	int16_t 	Max_Angle;
+} DCMotor_Encoder_Config_t;
+
+typedef struct{
+	TIM_HandleTypeDef*			Encoder_Timer;
+	DCMotor_Encoder_Config_t* 	encConfig;
+	DCMotor_Instance_t* 	  	motorInstance;
+} DCMotor_Encoder_Instance_t;
 
 //Actuator Struct
 typedef struct{
-    uint16_t Min_Pulse;                     //uS Based
-    uint16_t Max_Pulse;                     //uS Based
-    uint8_t Min_Length;                     //mm Based
-    uint8_t Max_Length;                     //mm Based
+    uint16_t 	Min_Pulse;                     //uS Based
+    uint16_t 	Max_Pulse;                     //uS Based
+    uint8_t 	Min_Length;                    //mm Based
+    uint8_t 	Max_Length;                    //mm Based
 } Actuator_Config_t;
 
 typedef struct 
@@ -115,7 +130,11 @@ Servo_Error Drive_Servo(const Servo_Instance_t* servo, const int8_t angle);
 //DC Motor Functions
 DCMotor_Error DCMotor_Init(DCMotor_Instance_t* dcMotor);
 DCMotor_Error Drive_DCMotor(const DCMotor_Instance_t* dcMotor, const uint8_t speed, DCMotor_Direction dir);
-DCMotor_Error Drive_DCMotor_Angle(const DCMotor_Instance_t* dcMotor);
+DCMotor_Error Stop_DCMotor(const DCMotor_Instance_t* dcMotor);
+
+//DC Motor With Encoder Function
+DCMotor_Error DCMotor_Encoder_Init(DCMotor_Encoder_Instance_t* encMotor);
+DCMotor_Error Drive_DCMotor_Angle(const DCMotor_Encoder_Instance_t* encMotor, int16_t angle);
 
 //Actuator Functions
 Actuator_Error Actuator_Init(Actuator_Instance_t* act);
