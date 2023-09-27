@@ -71,6 +71,10 @@ Actuator_Instance_t actInstance;
 DCMotor_Config_t dcMotorConfig;
 DCMotor_Instance_t dcMotor;
 
+/* Encoder Struct */
+DCMotor_Encoder_Config_t encConfig;
+DCMotor_Encoder_Instance_t encInstance;
+
 /* General Motor Var */
 Servo_Error servoError;
 Actuator_Error actError;
@@ -78,8 +82,12 @@ DCMotor_Error dcError;
 
 uint32_t encoderCnt = 0;
 char motorDone = 0;
-#define defaultValue (71050U)
-#define rotationValue (35525U)
+uint8_t uartBuf[4];
+#define defaultValue (35525U)
+uint8_t defaultPrint[] = "Please Enter Desired Angle: \n";
+volatile char inUART = 0;
+const char HANDSHAKE = 0xAA;
+int16_t userBalls = 0;
 /* USER CODE END 0 */
 
 /**
@@ -132,10 +140,12 @@ int main(void)
     while(1);
   }
 
-  actConfig.Min_Pulse   = 900;
-  actConfig.Max_Pulse   = 2100;
-  actConfig.Min_Length  = 0;
-  actConfig.Max_Length  = 30;
+  actConfig.Min_Pulse          = 900;
+  actConfig.Max_Pulse          = 2100;
+  actConfig.Min_Length         = 0;
+  actConfig.Max_Length         = 27;
+  actConfig.Desired_Max_Length = 0;
+  actConfig.Desired_Max_Length = 16;
 
   actInstance.Act_Timer = &htim3;
   actInstance.Channel   = TIM_CHANNEL_1;
@@ -159,16 +169,30 @@ int main(void)
   
   DCMotor_Init(&dcMotor);
 
-  __HAL_TIM_SET_COUNTER(&htim5, rotationValue);
-  HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
+  encConfig.Current_Angle     = 0;
+  encConfig.Default_Counter   = defaultValue;
+  encConfig.Degree_Per_Pulse  = (float)360 / defaultValue;
+  encConfig.Min_Angle         = -360;
+  encConfig.Max_Angle         = 360;
 
-  encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
-  dcError = Drive_DCMotor(&dcMotor, 45, CLOCKWISE);
-  if(dcError != DC_MOTOR_OK){
-    HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-    while(1);
-  }
-  HAL_Delay(500);
+  encInstance.Encoder_Timer   = &htim5;
+  encInstance.encConfig       = &encConfig;
+  encInstance.motorInstance   = &dcMotor;
+
+  DCMotor_Encoder_Init(&encInstance);
+
+  //Drive_DCMotor_Angle(&encInstance, -60);
+
+  // __HAL_TIM_SET_COUNTER(&htim5, rotationValue);
+  // HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
+
+  // encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+  // dcError = Drive_DCMotor(&dcMotor, 45, CLOCKWISE);
+  // if(dcError != DC_MOTOR_OK){
+  //   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+  //   while(1);
+  // }
+  // HAL_Delay(500);
 
   /* USER CODE END 2 */
 
@@ -176,20 +200,29 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
-    if(encoderCnt >= 44406){
-      Stop_DCMotor(&dcMotor);
-      HAL_Delay(1000);
-      dcError = Drive_DCMotor(&dcMotor, 42, COUNTER_CLOCKWISE);
-      while(!motorDone){
-        encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
-        if(encoderCnt <= 35525){
-          Stop_DCMotor(&dcMotor);
-          HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-          motorDone = 1;
-        }
-      }
-    }
+    // encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+    // if(encoderCnt >= 44406){
+    //   Stop_DCMotor(&dcMotor);
+    //   HAL_Delay(1000);
+    //   dcError = Drive_DCMotor(&dcMotor, 42, COUNTER_CLOCKWISE);
+    //   while(!motorDone){
+    //     encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+    //     if(encoderCnt <= 35525){
+    //       Stop_DCMotor(&dcMotor);
+    //       HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+    //       motorDone = 1;
+    //     }
+    //   }
+    // }
+
+  //HAL_UART_Transmit(&huart2, defaultPrint, sizeof(defaultPrint), 100);
+  HAL_UART_Receive_IT(&huart2, uartBuf, sizeof(uartBuf));
+  while(!inUART);
+  inUART = 0;
+  userBalls = atoi(uartBuf);
+  Drive_DCMotor_Angle(&encInstance, userBalls);
+  HAL_UART_Transmit(&huart2, &HANDSHAKE, 1, 100);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -268,6 +301,10 @@ void Error_Handler(void)
   {
   }
   /* USER CODE END Error_Handler_Debug */
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+  inUART = 1;
 }
 
 #ifdef  USE_FULL_ASSERT

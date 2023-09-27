@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
   28:Core/Src/main.c **** #include "BNO055.h"
   29:Core/Src/main.c **** #include "motor.h"
   30:Core/Src/main.c **** /* USER CODE END Includes */
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 2
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 2
 
 
   31:Core/Src/main.c **** 
@@ -104,218 +104,249 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
   71:Core/Src/main.c **** DCMotor_Config_t dcMotorConfig;
   72:Core/Src/main.c **** DCMotor_Instance_t dcMotor;
   73:Core/Src/main.c **** 
-  74:Core/Src/main.c **** /* General Motor Var */
-  75:Core/Src/main.c **** Servo_Error servoError;
-  76:Core/Src/main.c **** Actuator_Error actError;
-  77:Core/Src/main.c **** DCMotor_Error dcError;
-  78:Core/Src/main.c **** 
-  79:Core/Src/main.c **** uint32_t encoderCnt = 0;
-  80:Core/Src/main.c **** char motorDone = 0;
-  81:Core/Src/main.c **** #define defaultValue (71050U)
-  82:Core/Src/main.c **** #define rotationValue (35525U)
-  83:Core/Src/main.c **** /* USER CODE END 0 */
-  84:Core/Src/main.c **** 
-  85:Core/Src/main.c **** /**
-  86:Core/Src/main.c ****   * @brief  The application entry point.
-  87:Core/Src/main.c ****   * @retval int
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 3
+  74:Core/Src/main.c **** /* Encoder Struct */
+  75:Core/Src/main.c **** DCMotor_Encoder_Config_t encConfig;
+  76:Core/Src/main.c **** DCMotor_Encoder_Instance_t encInstance;
+  77:Core/Src/main.c **** 
+  78:Core/Src/main.c **** /* General Motor Var */
+  79:Core/Src/main.c **** Servo_Error servoError;
+  80:Core/Src/main.c **** Actuator_Error actError;
+  81:Core/Src/main.c **** DCMotor_Error dcError;
+  82:Core/Src/main.c **** 
+  83:Core/Src/main.c **** uint32_t encoderCnt = 0;
+  84:Core/Src/main.c **** char motorDone = 0;
+  85:Core/Src/main.c **** uint8_t uartBuf[4];
+  86:Core/Src/main.c **** #define defaultValue (35525U)
+  87:Core/Src/main.c **** uint8_t defaultPrint[] = "Please Enter Desired Angle: \n";
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 3
 
 
-  88:Core/Src/main.c ****   */
-  89:Core/Src/main.c **** int main(void)
-  90:Core/Src/main.c **** {
-  91:Core/Src/main.c ****   /* USER CODE BEGIN 1 */
+  88:Core/Src/main.c **** volatile char inUART = 0;
+  89:Core/Src/main.c **** const char HANDSHAKE = 0xAA;
+  90:Core/Src/main.c **** int16_t userBalls = 0;
+  91:Core/Src/main.c **** /* USER CODE END 0 */
   92:Core/Src/main.c **** 
-  93:Core/Src/main.c ****   /* USER CODE END 1 */
-  94:Core/Src/main.c **** 
-  95:Core/Src/main.c ****   /* MCU Configuration--------------------------------------------------------*/
-  96:Core/Src/main.c **** 
-  97:Core/Src/main.c ****   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  98:Core/Src/main.c ****   HAL_Init();
-  99:Core/Src/main.c **** 
- 100:Core/Src/main.c ****   /* USER CODE BEGIN Init */
- 101:Core/Src/main.c **** 
- 102:Core/Src/main.c ****   /* USER CODE END Init */
- 103:Core/Src/main.c **** 
- 104:Core/Src/main.c ****   /* Configure the system clock */
- 105:Core/Src/main.c ****   SystemClock_Config();
- 106:Core/Src/main.c **** 
- 107:Core/Src/main.c ****   /* USER CODE BEGIN SysInit */
- 108:Core/Src/main.c **** 
- 109:Core/Src/main.c ****   /* USER CODE END SysInit */
- 110:Core/Src/main.c **** 
- 111:Core/Src/main.c ****   /* Initialize all configured peripherals */
- 112:Core/Src/main.c ****   MX_GPIO_Init();
- 113:Core/Src/main.c ****   MX_USART2_UART_Init();
- 114:Core/Src/main.c ****   MX_I2C1_Init();
- 115:Core/Src/main.c ****   MX_TIM5_Init();
- 116:Core/Src/main.c ****   MX_TIM12_Init();
- 117:Core/Src/main.c ****   MX_TIM3_Init();
- 118:Core/Src/main.c ****   /* USER CODE BEGIN 2 */
- 119:Core/Src/main.c **** 
- 120:Core/Src/main.c ****   servoConfig.minDuty   = 0.025;
- 121:Core/Src/main.c ****   servoConfig.maxDuty   = 0.125;
- 122:Core/Src/main.c ****   servoConfig.minAngle  = -90;
- 123:Core/Src/main.c ****   servoConfig.minAngle  = 90;
- 124:Core/Src/main.c **** 
- 125:Core/Src/main.c ****   servoInstance.htim    = &htim3;
- 126:Core/Src/main.c ****   servoInstance.channel = TIM_CHANNEL_2;
- 127:Core/Src/main.c ****   servoInstance.config  = &servoConfig;
- 128:Core/Src/main.c **** 
- 129:Core/Src/main.c ****   servoError = Servo_Init(&servoInstance);
- 130:Core/Src/main.c ****   if(servoError != SERVO_OK){
- 131:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 132:Core/Src/main.c ****     while(1);
- 133:Core/Src/main.c ****   }
- 134:Core/Src/main.c **** 
- 135:Core/Src/main.c ****   actConfig.Min_Pulse   = 900;
- 136:Core/Src/main.c ****   actConfig.Max_Pulse   = 2100;
- 137:Core/Src/main.c ****   actConfig.Min_Length  = 0;
- 138:Core/Src/main.c ****   actConfig.Max_Length  = 30;
- 139:Core/Src/main.c **** 
- 140:Core/Src/main.c ****   actInstance.Act_Timer = &htim3;
- 141:Core/Src/main.c ****   actInstance.Channel   = TIM_CHANNEL_1;
- 142:Core/Src/main.c ****   actInstance.config    = &actConfig;
- 143:Core/Src/main.c **** 
- 144:Core/Src/main.c ****   actError = Actuator_Init(&actInstance);
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 4
+  93:Core/Src/main.c **** /**
+  94:Core/Src/main.c ****   * @brief  The application entry point.
+  95:Core/Src/main.c ****   * @retval int
+  96:Core/Src/main.c ****   */
+  97:Core/Src/main.c **** int main(void)
+  98:Core/Src/main.c **** {
+  99:Core/Src/main.c ****   /* USER CODE BEGIN 1 */
+ 100:Core/Src/main.c **** 
+ 101:Core/Src/main.c ****   /* USER CODE END 1 */
+ 102:Core/Src/main.c **** 
+ 103:Core/Src/main.c ****   /* MCU Configuration--------------------------------------------------------*/
+ 104:Core/Src/main.c **** 
+ 105:Core/Src/main.c ****   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+ 106:Core/Src/main.c ****   HAL_Init();
+ 107:Core/Src/main.c **** 
+ 108:Core/Src/main.c ****   /* USER CODE BEGIN Init */
+ 109:Core/Src/main.c **** 
+ 110:Core/Src/main.c ****   /* USER CODE END Init */
+ 111:Core/Src/main.c **** 
+ 112:Core/Src/main.c ****   /* Configure the system clock */
+ 113:Core/Src/main.c ****   SystemClock_Config();
+ 114:Core/Src/main.c **** 
+ 115:Core/Src/main.c ****   /* USER CODE BEGIN SysInit */
+ 116:Core/Src/main.c **** 
+ 117:Core/Src/main.c ****   /* USER CODE END SysInit */
+ 118:Core/Src/main.c **** 
+ 119:Core/Src/main.c ****   /* Initialize all configured peripherals */
+ 120:Core/Src/main.c ****   MX_GPIO_Init();
+ 121:Core/Src/main.c ****   MX_USART2_UART_Init();
+ 122:Core/Src/main.c ****   MX_I2C1_Init();
+ 123:Core/Src/main.c ****   MX_TIM5_Init();
+ 124:Core/Src/main.c ****   MX_TIM12_Init();
+ 125:Core/Src/main.c ****   MX_TIM3_Init();
+ 126:Core/Src/main.c ****   /* USER CODE BEGIN 2 */
+ 127:Core/Src/main.c **** 
+ 128:Core/Src/main.c ****   servoConfig.minDuty   = 0.025;
+ 129:Core/Src/main.c ****   servoConfig.maxDuty   = 0.125;
+ 130:Core/Src/main.c ****   servoConfig.minAngle  = -90;
+ 131:Core/Src/main.c ****   servoConfig.minAngle  = 90;
+ 132:Core/Src/main.c **** 
+ 133:Core/Src/main.c ****   servoInstance.htim    = &htim3;
+ 134:Core/Src/main.c ****   servoInstance.channel = TIM_CHANNEL_2;
+ 135:Core/Src/main.c ****   servoInstance.config  = &servoConfig;
+ 136:Core/Src/main.c **** 
+ 137:Core/Src/main.c ****   servoError = Servo_Init(&servoInstance);
+ 138:Core/Src/main.c ****   if(servoError != SERVO_OK){
+ 139:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+ 140:Core/Src/main.c ****     while(1);
+ 141:Core/Src/main.c ****   }
+ 142:Core/Src/main.c **** 
+ 143:Core/Src/main.c ****   actConfig.Min_Pulse   = 900;
+ 144:Core/Src/main.c ****   actConfig.Max_Pulse   = 2100;
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 4
 
 
- 145:Core/Src/main.c ****   if(actError != ACTUATOR_OK){
- 146:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 147:Core/Src/main.c ****     while(1);
- 148:Core/Src/main.c ****   }
- 149:Core/Src/main.c **** 
- 150:Core/Src/main.c ****   Actuator_Init(&actInstance);
+ 145:Core/Src/main.c ****   actConfig.Min_Length  = 0;
+ 146:Core/Src/main.c ****   actConfig.Max_Length  = 30;
+ 147:Core/Src/main.c **** 
+ 148:Core/Src/main.c ****   actInstance.Act_Timer = &htim3;
+ 149:Core/Src/main.c ****   actInstance.Channel   = TIM_CHANNEL_1;
+ 150:Core/Src/main.c ****   actInstance.config    = &actConfig;
  151:Core/Src/main.c **** 
- 152:Core/Src/main.c ****   dcMotorConfig.Min_Speed = 0;
- 153:Core/Src/main.c ****   dcMotorConfig.Max_Speed = 100;
- 154:Core/Src/main.c **** 
- 155:Core/Src/main.c ****   dcMotor.DC_Timer      = &htim12;
- 156:Core/Src/main.c ****   dcMotor.IN1_Channel   = TIM_CHANNEL_1;
- 157:Core/Src/main.c ****   dcMotor.IN2_Channel   = TIM_CHANNEL_2;
- 158:Core/Src/main.c ****   dcMotor.config        = &dcMotorConfig;
- 159:Core/Src/main.c ****   
- 160:Core/Src/main.c ****   DCMotor_Init(&dcMotor);
- 161:Core/Src/main.c **** 
- 162:Core/Src/main.c ****   __HAL_TIM_SET_COUNTER(&htim5, rotationValue);
- 163:Core/Src/main.c ****   HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
- 164:Core/Src/main.c **** 
- 165:Core/Src/main.c ****   encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
- 166:Core/Src/main.c ****   dcError = Drive_DCMotor(&dcMotor, 45, CLOCKWISE);
- 167:Core/Src/main.c ****   if(dcError != DC_MOTOR_OK){
- 168:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 169:Core/Src/main.c ****     while(1);
- 170:Core/Src/main.c ****   }
- 171:Core/Src/main.c ****   HAL_Delay(500);
- 172:Core/Src/main.c **** 
- 173:Core/Src/main.c ****   /* USER CODE END 2 */
- 174:Core/Src/main.c **** 
- 175:Core/Src/main.c ****   /* Infinite loop */
- 176:Core/Src/main.c ****   /* USER CODE BEGIN WHILE */
- 177:Core/Src/main.c ****   while (1)
- 178:Core/Src/main.c ****   {
- 179:Core/Src/main.c ****     encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
- 180:Core/Src/main.c ****     if(encoderCnt >= 44406){
- 181:Core/Src/main.c ****       Stop_DCMotor(&dcMotor);
- 182:Core/Src/main.c ****       HAL_Delay(1000);
- 183:Core/Src/main.c ****       dcError = Drive_DCMotor(&dcMotor, 42, COUNTER_CLOCKWISE);
- 184:Core/Src/main.c ****       while(!motorDone){
- 185:Core/Src/main.c ****         encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
- 186:Core/Src/main.c ****         if(encoderCnt <= 35525){
- 187:Core/Src/main.c ****           Stop_DCMotor(&dcMotor);
- 188:Core/Src/main.c ****           HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 189:Core/Src/main.c ****           motorDone = 1;
- 190:Core/Src/main.c ****         }
- 191:Core/Src/main.c ****       }
- 192:Core/Src/main.c ****     }
- 193:Core/Src/main.c ****     /* USER CODE END WHILE */
+ 152:Core/Src/main.c ****   actError = Actuator_Init(&actInstance);
+ 153:Core/Src/main.c ****   if(actError != ACTUATOR_OK){
+ 154:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+ 155:Core/Src/main.c ****     while(1);
+ 156:Core/Src/main.c ****   }
+ 157:Core/Src/main.c **** 
+ 158:Core/Src/main.c ****   Actuator_Init(&actInstance);
+ 159:Core/Src/main.c **** 
+ 160:Core/Src/main.c ****   dcMotorConfig.Min_Speed = 0;
+ 161:Core/Src/main.c ****   dcMotorConfig.Max_Speed = 100;
+ 162:Core/Src/main.c **** 
+ 163:Core/Src/main.c ****   dcMotor.DC_Timer      = &htim12;
+ 164:Core/Src/main.c ****   dcMotor.IN1_Channel   = TIM_CHANNEL_1;
+ 165:Core/Src/main.c ****   dcMotor.IN2_Channel   = TIM_CHANNEL_2;
+ 166:Core/Src/main.c ****   dcMotor.config        = &dcMotorConfig;
+ 167:Core/Src/main.c ****   
+ 168:Core/Src/main.c ****   DCMotor_Init(&dcMotor);
+ 169:Core/Src/main.c **** 
+ 170:Core/Src/main.c ****   encConfig.Current_Angle     = 0;
+ 171:Core/Src/main.c ****   encConfig.Default_Counter   = defaultValue;
+ 172:Core/Src/main.c ****   encConfig.Degree_Per_Pulse  = (float)360 / defaultValue;
+ 173:Core/Src/main.c ****   encConfig.Min_Angle         = -360;
+ 174:Core/Src/main.c ****   encConfig.Max_Angle         = 360;
+ 175:Core/Src/main.c **** 
+ 176:Core/Src/main.c ****   encInstance.Encoder_Timer   = &htim5;
+ 177:Core/Src/main.c ****   encInstance.encConfig       = &encConfig;
+ 178:Core/Src/main.c ****   encInstance.motorInstance   = &dcMotor;
+ 179:Core/Src/main.c **** 
+ 180:Core/Src/main.c ****   DCMotor_Encoder_Init(&encInstance);
+ 181:Core/Src/main.c **** 
+ 182:Core/Src/main.c ****   //Drive_DCMotor_Angle(&encInstance, -60);
+ 183:Core/Src/main.c **** 
+ 184:Core/Src/main.c ****   // __HAL_TIM_SET_COUNTER(&htim5, rotationValue);
+ 185:Core/Src/main.c ****   // HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
+ 186:Core/Src/main.c **** 
+ 187:Core/Src/main.c ****   // encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+ 188:Core/Src/main.c ****   // dcError = Drive_DCMotor(&dcMotor, 45, CLOCKWISE);
+ 189:Core/Src/main.c ****   // if(dcError != DC_MOTOR_OK){
+ 190:Core/Src/main.c ****   //   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+ 191:Core/Src/main.c ****   //   while(1);
+ 192:Core/Src/main.c ****   // }
+ 193:Core/Src/main.c ****   // HAL_Delay(500);
  194:Core/Src/main.c **** 
- 195:Core/Src/main.c ****     /* USER CODE BEGIN 3 */
- 196:Core/Src/main.c ****   }
- 197:Core/Src/main.c ****   /* USER CODE END 3 */
- 198:Core/Src/main.c **** }
- 199:Core/Src/main.c **** 
- 200:Core/Src/main.c **** /**
- 201:Core/Src/main.c ****   * @brief System Clock Configuration
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 5
+ 195:Core/Src/main.c ****   /* USER CODE END 2 */
+ 196:Core/Src/main.c **** 
+ 197:Core/Src/main.c ****   /* Infinite loop */
+ 198:Core/Src/main.c ****   /* USER CODE BEGIN WHILE */
+ 199:Core/Src/main.c ****   while (1)
+ 200:Core/Src/main.c ****   {
+ 201:Core/Src/main.c ****     // encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 5
 
 
- 202:Core/Src/main.c ****   * @retval None
- 203:Core/Src/main.c ****   */
- 204:Core/Src/main.c **** void SystemClock_Config(void)
- 205:Core/Src/main.c **** {
- 206:Core/Src/main.c ****   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
- 207:Core/Src/main.c ****   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
- 208:Core/Src/main.c **** 
- 209:Core/Src/main.c ****   /** Configure the main internal regulator output voltage
- 210:Core/Src/main.c ****   */
- 211:Core/Src/main.c ****   __HAL_RCC_PWR_CLK_ENABLE();
- 212:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
- 213:Core/Src/main.c **** 
- 214:Core/Src/main.c ****   /** Initializes the RCC Oscillators according to the specified parameters
- 215:Core/Src/main.c ****   * in the RCC_OscInitTypeDef structure.
- 216:Core/Src/main.c ****   */
- 217:Core/Src/main.c ****   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
- 218:Core/Src/main.c ****   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
- 219:Core/Src/main.c ****   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
- 220:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
- 221:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
- 222:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLM = 8;
- 223:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLN = 180;
- 224:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
- 225:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLQ = 2;
- 226:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLR = 2;
- 227:Core/Src/main.c ****   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
- 228:Core/Src/main.c ****   {
- 229:Core/Src/main.c ****     Error_Handler();
- 230:Core/Src/main.c ****   }
- 231:Core/Src/main.c **** 
- 232:Core/Src/main.c ****   /** Activate the Over-Drive mode
- 233:Core/Src/main.c ****   */
- 234:Core/Src/main.c ****   if (HAL_PWREx_EnableOverDrive() != HAL_OK)
- 235:Core/Src/main.c ****   {
- 236:Core/Src/main.c ****     Error_Handler();
- 237:Core/Src/main.c ****   }
- 238:Core/Src/main.c **** 
- 239:Core/Src/main.c ****   /** Initializes the CPU, AHB and APB buses clocks
- 240:Core/Src/main.c ****   */
- 241:Core/Src/main.c ****   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
- 242:Core/Src/main.c ****                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
- 243:Core/Src/main.c ****   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
- 244:Core/Src/main.c ****   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
- 245:Core/Src/main.c ****   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
- 246:Core/Src/main.c ****   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
- 247:Core/Src/main.c **** 
- 248:Core/Src/main.c ****   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
- 249:Core/Src/main.c ****   {
- 250:Core/Src/main.c ****     Error_Handler();
- 251:Core/Src/main.c ****   }
- 252:Core/Src/main.c **** }
- 253:Core/Src/main.c **** 
- 254:Core/Src/main.c **** /* USER CODE BEGIN 4 */
- 255:Core/Src/main.c **** 
- 256:Core/Src/main.c **** /* USER CODE END 4 */
- 257:Core/Src/main.c **** 
- 258:Core/Src/main.c **** /**
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 6
+ 202:Core/Src/main.c ****     // if(encoderCnt >= 44406){
+ 203:Core/Src/main.c ****     //   Stop_DCMotor(&dcMotor);
+ 204:Core/Src/main.c ****     //   HAL_Delay(1000);
+ 205:Core/Src/main.c ****     //   dcError = Drive_DCMotor(&dcMotor, 42, COUNTER_CLOCKWISE);
+ 206:Core/Src/main.c ****     //   while(!motorDone){
+ 207:Core/Src/main.c ****     //     encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+ 208:Core/Src/main.c ****     //     if(encoderCnt <= 35525){
+ 209:Core/Src/main.c ****     //       Stop_DCMotor(&dcMotor);
+ 210:Core/Src/main.c ****     //       HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+ 211:Core/Src/main.c ****     //       motorDone = 1;
+ 212:Core/Src/main.c ****     //     }
+ 213:Core/Src/main.c ****     //   }
+ 214:Core/Src/main.c ****     // }
+ 215:Core/Src/main.c **** 
+ 216:Core/Src/main.c ****   //HAL_UART_Transmit(&huart2, defaultPrint, sizeof(defaultPrint), 100);
+ 217:Core/Src/main.c ****   HAL_UART_Receive_IT(&huart2, uartBuf, sizeof(uartBuf));
+ 218:Core/Src/main.c ****   while(!inUART);
+ 219:Core/Src/main.c ****   inUART = 0;
+ 220:Core/Src/main.c ****   userBalls = atoi(uartBuf);
+ 221:Core/Src/main.c ****   Drive_DCMotor_Angle(&encInstance, userBalls);
+ 222:Core/Src/main.c ****   HAL_UART_Transmit(&huart2, &HANDSHAKE, 1, 100);
+ 223:Core/Src/main.c **** 
+ 224:Core/Src/main.c ****     /* USER CODE END WHILE */
+ 225:Core/Src/main.c **** 
+ 226:Core/Src/main.c ****     /* USER CODE BEGIN 3 */
+ 227:Core/Src/main.c ****   }
+ 228:Core/Src/main.c ****   /* USER CODE END 3 */
+ 229:Core/Src/main.c **** }
+ 230:Core/Src/main.c **** 
+ 231:Core/Src/main.c **** /**
+ 232:Core/Src/main.c ****   * @brief System Clock Configuration
+ 233:Core/Src/main.c ****   * @retval None
+ 234:Core/Src/main.c ****   */
+ 235:Core/Src/main.c **** void SystemClock_Config(void)
+ 236:Core/Src/main.c **** {
+ 237:Core/Src/main.c ****   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+ 238:Core/Src/main.c ****   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+ 239:Core/Src/main.c **** 
+ 240:Core/Src/main.c ****   /** Configure the main internal regulator output voltage
+ 241:Core/Src/main.c ****   */
+ 242:Core/Src/main.c ****   __HAL_RCC_PWR_CLK_ENABLE();
+ 243:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+ 244:Core/Src/main.c **** 
+ 245:Core/Src/main.c ****   /** Initializes the RCC Oscillators according to the specified parameters
+ 246:Core/Src/main.c ****   * in the RCC_OscInitTypeDef structure.
+ 247:Core/Src/main.c ****   */
+ 248:Core/Src/main.c ****   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+ 249:Core/Src/main.c ****   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+ 250:Core/Src/main.c ****   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+ 251:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+ 252:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+ 253:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLM = 8;
+ 254:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLN = 180;
+ 255:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+ 256:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLQ = 2;
+ 257:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLR = 2;
+ 258:Core/Src/main.c ****   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 6
 
 
- 259:Core/Src/main.c ****   * @brief  This function is executed in case of error occurrence.
- 260:Core/Src/main.c ****   * @retval None
- 261:Core/Src/main.c ****   */
- 262:Core/Src/main.c **** void Error_Handler(void)
- 263:Core/Src/main.c **** {
-  29              		.loc 1 263 1 view -0
+ 259:Core/Src/main.c ****   {
+ 260:Core/Src/main.c ****     Error_Handler();
+ 261:Core/Src/main.c ****   }
+ 262:Core/Src/main.c **** 
+ 263:Core/Src/main.c ****   /** Activate the Over-Drive mode
+ 264:Core/Src/main.c ****   */
+ 265:Core/Src/main.c ****   if (HAL_PWREx_EnableOverDrive() != HAL_OK)
+ 266:Core/Src/main.c ****   {
+ 267:Core/Src/main.c ****     Error_Handler();
+ 268:Core/Src/main.c ****   }
+ 269:Core/Src/main.c **** 
+ 270:Core/Src/main.c ****   /** Initializes the CPU, AHB and APB buses clocks
+ 271:Core/Src/main.c ****   */
+ 272:Core/Src/main.c ****   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+ 273:Core/Src/main.c ****                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+ 274:Core/Src/main.c ****   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+ 275:Core/Src/main.c ****   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+ 276:Core/Src/main.c ****   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+ 277:Core/Src/main.c ****   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+ 278:Core/Src/main.c **** 
+ 279:Core/Src/main.c ****   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+ 280:Core/Src/main.c ****   {
+ 281:Core/Src/main.c ****     Error_Handler();
+ 282:Core/Src/main.c ****   }
+ 283:Core/Src/main.c **** }
+ 284:Core/Src/main.c **** 
+ 285:Core/Src/main.c **** /* USER CODE BEGIN 4 */
+ 286:Core/Src/main.c **** 
+ 287:Core/Src/main.c **** /* USER CODE END 4 */
+ 288:Core/Src/main.c **** 
+ 289:Core/Src/main.c **** /**
+ 290:Core/Src/main.c ****   * @brief  This function is executed in case of error occurrence.
+ 291:Core/Src/main.c ****   * @retval None
+ 292:Core/Src/main.c ****   */
+ 293:Core/Src/main.c **** void Error_Handler(void)
+ 294:Core/Src/main.c **** {
+  29              		.loc 1 294 1 view -0
   30              		.cfi_startproc
   31              		@ Volatile: function does not return.
   32              		@ args = 0, pretend = 0, frame = 0
   33              		@ frame_needed = 0, uses_anonymous_args = 0
   34              		@ link register save eliminated.
- 264:Core/Src/main.c ****   /* USER CODE BEGIN Error_Handler_Debug */
- 265:Core/Src/main.c ****   /* User can add his own implementation to report the HAL error return state */
- 266:Core/Src/main.c ****   __disable_irq();
-  35              		.loc 1 266 3 view .LVU1
+ 295:Core/Src/main.c ****   /* USER CODE BEGIN Error_Handler_Debug */
+ 296:Core/Src/main.c ****   /* User can add his own implementation to report the HAL error return state */
+ 297:Core/Src/main.c ****   __disable_irq();
+  35              		.loc 1 297 3 view .LVU1
   36              	.LBB4:
   37              	.LBI4:
   38              		.file 2 "Drivers/CMSIS/Include/cmsis_gcc.h"
@@ -327,6 +358,9 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
    6:Drivers/CMSIS/Include/cmsis_gcc.h ****  ******************************************************************************/
    7:Drivers/CMSIS/Include/cmsis_gcc.h **** /*
    8:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 7
+
+
    9:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
   10:Drivers/CMSIS/Include/cmsis_gcc.h ****  * SPDX-License-Identifier: Apache-2.0
   11:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
@@ -358,9 +392,6 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
   37:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
   38:Drivers/CMSIS/Include/cmsis_gcc.h **** 
   39:Drivers/CMSIS/Include/cmsis_gcc.h **** /* CMSIS compiler specific defines */
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 7
-
-
   40:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __ASM
   41:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __ASM                                  __asm
   42:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
@@ -387,6 +418,9 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
   63:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
   64:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED_STRUCT
   65:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED_STRUCT                        struct __attribute__((packed, aligned(1)))
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 8
+
+
   66:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
   67:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED_UNION
   68:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED_UNION                         union __attribute__((packed, aligned(1)))
@@ -418,9 +452,6 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
   94:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32_WRITE
   95:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
   96:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 8
-
-
   97:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
   98:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT32_WRITE { uint32_t v; };
   99:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
@@ -447,6 +478,9 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
  120:Drivers/CMSIS/Include/cmsis_gcc.h ****     \defgroup CMSIS_Core_RegAccFunctions CMSIS Core Register Access Functions
  121:Drivers/CMSIS/Include/cmsis_gcc.h ****   @{
  122:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 9
+
+
  123:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  124:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
  125:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Enable IRQ Interrupts
@@ -478,17 +512,14 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
   47              		.syntax unified
   48              	.L2:
   49              	.LBE5:
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 9
-
-
   50              	.LBE4:
- 267:Core/Src/main.c ****   while (1)
-  51              		.loc 1 267 3 discriminator 1 view .LVU4
- 268:Core/Src/main.c ****   {
- 269:Core/Src/main.c ****   }
-  52              		.loc 1 269 3 discriminator 1 view .LVU5
- 267:Core/Src/main.c ****   while (1)
-  53              		.loc 1 267 9 discriminator 1 view .LVU6
+ 298:Core/Src/main.c ****   while (1)
+  51              		.loc 1 298 3 discriminator 1 view .LVU4
+ 299:Core/Src/main.c ****   {
+ 300:Core/Src/main.c ****   }
+  52              		.loc 1 300 3 discriminator 1 view .LVU5
+ 298:Core/Src/main.c ****   while (1)
+  53              		.loc 1 298 9 discriminator 1 view .LVU6
   54 0002 FEE7     		b	.L2
   55              		.cfi_endproc
   56              	.LFE132:
@@ -500,207 +531,210 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
   63              		.thumb_func
   65              	SystemClock_Config:
   66              	.LFB131:
- 205:Core/Src/main.c ****   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  67              		.loc 1 205 1 view -0
+ 236:Core/Src/main.c ****   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  67              		.loc 1 236 1 view -0
   68              		.cfi_startproc
   69              		@ args = 0, pretend = 0, frame = 80
   70              		@ frame_needed = 0, uses_anonymous_args = 0
   71 0000 00B5     		push	{lr}
   72              		.cfi_def_cfa_offset 4
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 10
+
+
   73              		.cfi_offset 14, -4
   74 0002 95B0     		sub	sp, sp, #84
   75              		.cfi_def_cfa_offset 88
- 206:Core/Src/main.c ****   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  76              		.loc 1 206 3 view .LVU8
- 206:Core/Src/main.c ****   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  77              		.loc 1 206 22 is_stmt 0 view .LVU9
+ 237:Core/Src/main.c ****   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  76              		.loc 1 237 3 view .LVU8
+ 237:Core/Src/main.c ****   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  77              		.loc 1 237 22 is_stmt 0 view .LVU9
   78 0004 3422     		movs	r2, #52
   79 0006 0021     		movs	r1, #0
   80 0008 07A8     		add	r0, sp, #28
   81 000a FFF7FEFF 		bl	memset
   82              	.LVL0:
- 207:Core/Src/main.c **** 
-  83              		.loc 1 207 3 is_stmt 1 view .LVU10
- 207:Core/Src/main.c **** 
-  84              		.loc 1 207 22 is_stmt 0 view .LVU11
+ 238:Core/Src/main.c **** 
+  83              		.loc 1 238 3 is_stmt 1 view .LVU10
+ 238:Core/Src/main.c **** 
+  84              		.loc 1 238 22 is_stmt 0 view .LVU11
   85 000e 0023     		movs	r3, #0
   86 0010 0293     		str	r3, [sp, #8]
   87 0012 0393     		str	r3, [sp, #12]
   88 0014 0493     		str	r3, [sp, #16]
   89 0016 0593     		str	r3, [sp, #20]
   90 0018 0693     		str	r3, [sp, #24]
- 211:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  91              		.loc 1 211 3 is_stmt 1 view .LVU12
+ 242:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  91              		.loc 1 242 3 is_stmt 1 view .LVU12
   92              	.LBB6:
- 211:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  93              		.loc 1 211 3 view .LVU13
+ 242:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  93              		.loc 1 242 3 view .LVU13
   94 001a 0093     		str	r3, [sp]
- 211:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  95              		.loc 1 211 3 view .LVU14
+ 242:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  95              		.loc 1 242 3 view .LVU14
   96 001c 224A     		ldr	r2, .L11
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 10
-
-
   97 001e 116C     		ldr	r1, [r2, #64]
   98 0020 41F08051 		orr	r1, r1, #268435456
   99 0024 1164     		str	r1, [r2, #64]
- 211:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
- 100              		.loc 1 211 3 view .LVU15
+ 242:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+ 100              		.loc 1 242 3 view .LVU15
  101 0026 126C     		ldr	r2, [r2, #64]
  102 0028 02F08052 		and	r2, r2, #268435456
  103 002c 0092     		str	r2, [sp]
- 211:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
- 104              		.loc 1 211 3 view .LVU16
+ 242:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+ 104              		.loc 1 242 3 view .LVU16
  105 002e 009A     		ldr	r2, [sp]
  106              	.LBE6:
- 211:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
- 107              		.loc 1 211 3 view .LVU17
- 212:Core/Src/main.c **** 
- 108              		.loc 1 212 3 view .LVU18
+ 242:Core/Src/main.c ****   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+ 107              		.loc 1 242 3 view .LVU17
+ 243:Core/Src/main.c **** 
+ 108              		.loc 1 243 3 view .LVU18
  109              	.LBB7:
- 212:Core/Src/main.c **** 
- 110              		.loc 1 212 3 view .LVU19
+ 243:Core/Src/main.c **** 
+ 110              		.loc 1 243 3 view .LVU19
  111 0030 0193     		str	r3, [sp, #4]
- 212:Core/Src/main.c **** 
- 112              		.loc 1 212 3 view .LVU20
+ 243:Core/Src/main.c **** 
+ 112              		.loc 1 243 3 view .LVU20
  113 0032 1E4A     		ldr	r2, .L11+4
  114 0034 1168     		ldr	r1, [r2]
  115 0036 41F44041 		orr	r1, r1, #49152
  116 003a 1160     		str	r1, [r2]
- 212:Core/Src/main.c **** 
- 117              		.loc 1 212 3 view .LVU21
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 11
+
+
+ 243:Core/Src/main.c **** 
+ 117              		.loc 1 243 3 view .LVU21
  118 003c 1268     		ldr	r2, [r2]
  119 003e 02F44042 		and	r2, r2, #49152
  120 0042 0192     		str	r2, [sp, #4]
- 212:Core/Src/main.c **** 
- 121              		.loc 1 212 3 view .LVU22
+ 243:Core/Src/main.c **** 
+ 121              		.loc 1 243 3 view .LVU22
  122 0044 019A     		ldr	r2, [sp, #4]
  123              	.LBE7:
- 212:Core/Src/main.c **** 
- 124              		.loc 1 212 3 view .LVU23
- 217:Core/Src/main.c ****   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
- 125              		.loc 1 217 3 view .LVU24
- 217:Core/Src/main.c ****   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
- 126              		.loc 1 217 36 is_stmt 0 view .LVU25
+ 243:Core/Src/main.c **** 
+ 124              		.loc 1 243 3 view .LVU23
+ 248:Core/Src/main.c ****   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+ 125              		.loc 1 248 3 view .LVU24
+ 248:Core/Src/main.c ****   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+ 126              		.loc 1 248 36 is_stmt 0 view .LVU25
  127 0046 0222     		movs	r2, #2
  128 0048 0792     		str	r2, [sp, #28]
- 218:Core/Src/main.c ****   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
- 129              		.loc 1 218 3 is_stmt 1 view .LVU26
- 218:Core/Src/main.c ****   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
- 130              		.loc 1 218 30 is_stmt 0 view .LVU27
+ 249:Core/Src/main.c ****   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+ 129              		.loc 1 249 3 is_stmt 1 view .LVU26
+ 249:Core/Src/main.c ****   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+ 130              		.loc 1 249 30 is_stmt 0 view .LVU27
  131 004a 0121     		movs	r1, #1
  132 004c 0A91     		str	r1, [sp, #40]
- 219:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
- 133              		.loc 1 219 3 is_stmt 1 view .LVU28
- 219:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
- 134              		.loc 1 219 41 is_stmt 0 view .LVU29
+ 250:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+ 133              		.loc 1 250 3 is_stmt 1 view .LVU28
+ 250:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+ 134              		.loc 1 250 41 is_stmt 0 view .LVU29
  135 004e 1021     		movs	r1, #16
  136 0050 0B91     		str	r1, [sp, #44]
- 220:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
- 137              		.loc 1 220 3 is_stmt 1 view .LVU30
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 11
-
-
- 220:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
- 138              		.loc 1 220 34 is_stmt 0 view .LVU31
+ 251:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+ 137              		.loc 1 251 3 is_stmt 1 view .LVU30
+ 251:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+ 138              		.loc 1 251 34 is_stmt 0 view .LVU31
  139 0052 0D92     		str	r2, [sp, #52]
- 221:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLM = 8;
- 140              		.loc 1 221 3 is_stmt 1 view .LVU32
- 221:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLM = 8;
- 141              		.loc 1 221 35 is_stmt 0 view .LVU33
+ 252:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLM = 8;
+ 140              		.loc 1 252 3 is_stmt 1 view .LVU32
+ 252:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLM = 8;
+ 141              		.loc 1 252 35 is_stmt 0 view .LVU33
  142 0054 0E93     		str	r3, [sp, #56]
- 222:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLN = 180;
- 143              		.loc 1 222 3 is_stmt 1 view .LVU34
- 222:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLN = 180;
- 144              		.loc 1 222 30 is_stmt 0 view .LVU35
+ 253:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLN = 180;
+ 143              		.loc 1 253 3 is_stmt 1 view .LVU34
+ 253:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLN = 180;
+ 144              		.loc 1 253 30 is_stmt 0 view .LVU35
  145 0056 0823     		movs	r3, #8
  146 0058 0F93     		str	r3, [sp, #60]
- 223:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
- 147              		.loc 1 223 3 is_stmt 1 view .LVU36
- 223:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
- 148              		.loc 1 223 30 is_stmt 0 view .LVU37
+ 254:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+ 147              		.loc 1 254 3 is_stmt 1 view .LVU36
+ 254:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+ 148              		.loc 1 254 30 is_stmt 0 view .LVU37
  149 005a B423     		movs	r3, #180
  150 005c 1093     		str	r3, [sp, #64]
- 224:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLQ = 2;
- 151              		.loc 1 224 3 is_stmt 1 view .LVU38
- 224:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLQ = 2;
- 152              		.loc 1 224 30 is_stmt 0 view .LVU39
+ 255:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLQ = 2;
+ 151              		.loc 1 255 3 is_stmt 1 view .LVU38
+ 255:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLQ = 2;
+ 152              		.loc 1 255 30 is_stmt 0 view .LVU39
  153 005e 1192     		str	r2, [sp, #68]
- 225:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLR = 2;
- 154              		.loc 1 225 3 is_stmt 1 view .LVU40
- 225:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLR = 2;
- 155              		.loc 1 225 30 is_stmt 0 view .LVU41
+ 256:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLR = 2;
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 12
+
+
+ 154              		.loc 1 256 3 is_stmt 1 view .LVU40
+ 256:Core/Src/main.c ****   RCC_OscInitStruct.PLL.PLLR = 2;
+ 155              		.loc 1 256 30 is_stmt 0 view .LVU41
  156 0060 1292     		str	r2, [sp, #72]
- 226:Core/Src/main.c ****   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
- 157              		.loc 1 226 3 is_stmt 1 view .LVU42
- 226:Core/Src/main.c ****   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
- 158              		.loc 1 226 30 is_stmt 0 view .LVU43
+ 257:Core/Src/main.c ****   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+ 157              		.loc 1 257 3 is_stmt 1 view .LVU42
+ 257:Core/Src/main.c ****   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+ 158              		.loc 1 257 30 is_stmt 0 view .LVU43
  159 0062 1392     		str	r2, [sp, #76]
- 227:Core/Src/main.c ****   {
- 160              		.loc 1 227 3 is_stmt 1 view .LVU44
- 227:Core/Src/main.c ****   {
- 161              		.loc 1 227 7 is_stmt 0 view .LVU45
+ 258:Core/Src/main.c ****   {
+ 160              		.loc 1 258 3 is_stmt 1 view .LVU44
+ 258:Core/Src/main.c ****   {
+ 161              		.loc 1 258 7 is_stmt 0 view .LVU45
  162 0064 07A8     		add	r0, sp, #28
  163 0066 FFF7FEFF 		bl	HAL_RCC_OscConfig
  164              	.LVL1:
- 227:Core/Src/main.c ****   {
- 165              		.loc 1 227 6 view .LVU46
+ 258:Core/Src/main.c ****   {
+ 165              		.loc 1 258 6 view .LVU46
  166 006a B0B9     		cbnz	r0, .L8
- 234:Core/Src/main.c ****   {
- 167              		.loc 1 234 3 is_stmt 1 view .LVU47
- 234:Core/Src/main.c ****   {
- 168              		.loc 1 234 7 is_stmt 0 view .LVU48
+ 265:Core/Src/main.c ****   {
+ 167              		.loc 1 265 3 is_stmt 1 view .LVU47
+ 265:Core/Src/main.c ****   {
+ 168              		.loc 1 265 7 is_stmt 0 view .LVU48
  169 006c FFF7FEFF 		bl	HAL_PWREx_EnableOverDrive
  170              	.LVL2:
- 234:Core/Src/main.c ****   {
- 171              		.loc 1 234 6 view .LVU49
+ 265:Core/Src/main.c ****   {
+ 171              		.loc 1 265 6 view .LVU49
  172 0070 A8B9     		cbnz	r0, .L9
- 241:Core/Src/main.c ****                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
- 173              		.loc 1 241 3 is_stmt 1 view .LVU50
- 241:Core/Src/main.c ****                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 12
-
-
- 174              		.loc 1 241 31 is_stmt 0 view .LVU51
+ 272:Core/Src/main.c ****                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+ 173              		.loc 1 272 3 is_stmt 1 view .LVU50
+ 272:Core/Src/main.c ****                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+ 174              		.loc 1 272 31 is_stmt 0 view .LVU51
  175 0072 0F23     		movs	r3, #15
  176 0074 0293     		str	r3, [sp, #8]
- 243:Core/Src/main.c ****   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
- 177              		.loc 1 243 3 is_stmt 1 view .LVU52
- 243:Core/Src/main.c ****   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
- 178              		.loc 1 243 34 is_stmt 0 view .LVU53
+ 274:Core/Src/main.c ****   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+ 177              		.loc 1 274 3 is_stmt 1 view .LVU52
+ 274:Core/Src/main.c ****   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+ 178              		.loc 1 274 34 is_stmt 0 view .LVU53
  179 0076 0223     		movs	r3, #2
  180 0078 0393     		str	r3, [sp, #12]
- 244:Core/Src/main.c ****   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
- 181              		.loc 1 244 3 is_stmt 1 view .LVU54
- 244:Core/Src/main.c ****   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
- 182              		.loc 1 244 35 is_stmt 0 view .LVU55
+ 275:Core/Src/main.c ****   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+ 181              		.loc 1 275 3 is_stmt 1 view .LVU54
+ 275:Core/Src/main.c ****   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+ 182              		.loc 1 275 35 is_stmt 0 view .LVU55
  183 007a 0023     		movs	r3, #0
  184 007c 0493     		str	r3, [sp, #16]
- 245:Core/Src/main.c ****   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
- 185              		.loc 1 245 3 is_stmt 1 view .LVU56
- 245:Core/Src/main.c ****   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
- 186              		.loc 1 245 36 is_stmt 0 view .LVU57
+ 276:Core/Src/main.c ****   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+ 185              		.loc 1 276 3 is_stmt 1 view .LVU56
+ 276:Core/Src/main.c ****   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+ 186              		.loc 1 276 36 is_stmt 0 view .LVU57
  187 007e 4FF4A053 		mov	r3, #5120
  188 0082 0593     		str	r3, [sp, #20]
- 246:Core/Src/main.c **** 
- 189              		.loc 1 246 3 is_stmt 1 view .LVU58
- 246:Core/Src/main.c **** 
- 190              		.loc 1 246 36 is_stmt 0 view .LVU59
+ 277:Core/Src/main.c **** 
+ 189              		.loc 1 277 3 is_stmt 1 view .LVU58
+ 277:Core/Src/main.c **** 
+ 190              		.loc 1 277 36 is_stmt 0 view .LVU59
  191 0084 4FF48053 		mov	r3, #4096
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 13
+
+
  192 0088 0693     		str	r3, [sp, #24]
- 248:Core/Src/main.c ****   {
- 193              		.loc 1 248 3 is_stmt 1 view .LVU60
- 248:Core/Src/main.c ****   {
- 194              		.loc 1 248 7 is_stmt 0 view .LVU61
+ 279:Core/Src/main.c ****   {
+ 193              		.loc 1 279 3 is_stmt 1 view .LVU60
+ 279:Core/Src/main.c ****   {
+ 194              		.loc 1 279 7 is_stmt 0 view .LVU61
  195 008a 0521     		movs	r1, #5
  196 008c 02A8     		add	r0, sp, #8
  197 008e FFF7FEFF 		bl	HAL_RCC_ClockConfig
  198              	.LVL3:
- 248:Core/Src/main.c ****   {
- 199              		.loc 1 248 6 view .LVU62
+ 279:Core/Src/main.c ****   {
+ 199              		.loc 1 279 6 view .LVU62
  200 0092 30B9     		cbnz	r0, .L10
- 252:Core/Src/main.c **** 
- 201              		.loc 1 252 1 view .LVU63
+ 283:Core/Src/main.c **** 
+ 201              		.loc 1 283 1 view .LVU63
  202 0094 15B0     		add	sp, sp, #84
  203              		.cfi_remember_state
  204              		.cfi_def_cfa_offset 4
@@ -708,21 +742,18 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
  206 0096 5DF804FB 		ldr	pc, [sp], #4
  207              	.L8:
  208              		.cfi_restore_state
- 229:Core/Src/main.c ****   }
- 209              		.loc 1 229 5 is_stmt 1 view .LVU64
+ 260:Core/Src/main.c ****   }
+ 209              		.loc 1 260 5 is_stmt 1 view .LVU64
  210 009a FFF7FEFF 		bl	Error_Handler
  211              	.LVL4:
  212              	.L9:
- 236:Core/Src/main.c ****   }
- 213              		.loc 1 236 5 view .LVU65
+ 267:Core/Src/main.c ****   }
+ 213              		.loc 1 267 5 view .LVU65
  214 009e FFF7FEFF 		bl	Error_Handler
  215              	.LVL5:
  216              	.L10:
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 13
-
-
- 250:Core/Src/main.c ****   }
- 217              		.loc 1 250 5 view .LVU66
+ 281:Core/Src/main.c ****   }
+ 217              		.loc 1 281 5 view .LVU66
  218 00a2 FFF7FEFF 		bl	Error_Handler
  219              	.LVL6:
  220              	.L12:
@@ -740,565 +771,626 @@ ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 1
  233              		.thumb_func
  235              	main:
  236              	.LFB130:
-  90:Core/Src/main.c ****   /* USER CODE BEGIN 1 */
- 237              		.loc 1 90 1 view -0
+  98:Core/Src/main.c ****   /* USER CODE BEGIN 1 */
+ 237              		.loc 1 98 1 view -0
  238              		.cfi_startproc
  239              		@ Volatile: function does not return.
  240              		@ args = 0, pretend = 0, frame = 0
  241              		@ frame_needed = 0, uses_anonymous_args = 0
  242 0000 08B5     		push	{r3, lr}
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 14
+
+
  243              		.cfi_def_cfa_offset 8
  244              		.cfi_offset 3, -8
  245              		.cfi_offset 14, -4
-  98:Core/Src/main.c **** 
- 246              		.loc 1 98 3 view .LVU68
+ 106:Core/Src/main.c **** 
+ 246              		.loc 1 106 3 view .LVU68
  247 0002 FFF7FEFF 		bl	HAL_Init
  248              	.LVL7:
- 105:Core/Src/main.c **** 
- 249              		.loc 1 105 3 view .LVU69
+ 113:Core/Src/main.c **** 
+ 249              		.loc 1 113 3 view .LVU69
  250 0006 FFF7FEFF 		bl	SystemClock_Config
  251              	.LVL8:
- 112:Core/Src/main.c ****   MX_USART2_UART_Init();
- 252              		.loc 1 112 3 view .LVU70
+ 120:Core/Src/main.c ****   MX_USART2_UART_Init();
+ 252              		.loc 1 120 3 view .LVU70
  253 000a FFF7FEFF 		bl	MX_GPIO_Init
  254              	.LVL9:
- 113:Core/Src/main.c ****   MX_I2C1_Init();
- 255              		.loc 1 113 3 view .LVU71
+ 121:Core/Src/main.c ****   MX_I2C1_Init();
+ 255              		.loc 1 121 3 view .LVU71
  256 000e FFF7FEFF 		bl	MX_USART2_UART_Init
  257              	.LVL10:
- 114:Core/Src/main.c ****   MX_TIM5_Init();
- 258              		.loc 1 114 3 view .LVU72
+ 122:Core/Src/main.c ****   MX_TIM5_Init();
+ 258              		.loc 1 122 3 view .LVU72
  259 0012 FFF7FEFF 		bl	MX_I2C1_Init
  260              	.LVL11:
- 115:Core/Src/main.c ****   MX_TIM12_Init();
- 261              		.loc 1 115 3 view .LVU73
+ 123:Core/Src/main.c ****   MX_TIM12_Init();
+ 261              		.loc 1 123 3 view .LVU73
  262 0016 FFF7FEFF 		bl	MX_TIM5_Init
  263              	.LVL12:
- 116:Core/Src/main.c ****   MX_TIM3_Init();
- 264              		.loc 1 116 3 view .LVU74
+ 124:Core/Src/main.c ****   MX_TIM3_Init();
+ 264              		.loc 1 124 3 view .LVU74
  265 001a FFF7FEFF 		bl	MX_TIM12_Init
  266              	.LVL13:
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 14
-
-
- 117:Core/Src/main.c ****   /* USER CODE BEGIN 2 */
- 267              		.loc 1 117 3 view .LVU75
+ 125:Core/Src/main.c ****   /* USER CODE BEGIN 2 */
+ 267              		.loc 1 125 3 view .LVU75
  268 001e FFF7FEFF 		bl	MX_TIM3_Init
  269              	.LVL14:
- 120:Core/Src/main.c ****   servoConfig.maxDuty   = 0.125;
- 270              		.loc 1 120 3 view .LVU76
- 120:Core/Src/main.c ****   servoConfig.maxDuty   = 0.125;
- 271              		.loc 1 120 25 is_stmt 0 view .LVU77
- 272 0022 4C4B     		ldr	r3, .L26
- 273 0024 4C4A     		ldr	r2, .L26+4
+ 128:Core/Src/main.c ****   servoConfig.maxDuty   = 0.125;
+ 270              		.loc 1 128 3 view .LVU76
+ 128:Core/Src/main.c ****   servoConfig.maxDuty   = 0.125;
+ 271              		.loc 1 128 25 is_stmt 0 view .LVU77
+ 272 0022 3C4B     		ldr	r3, .L21
+ 273 0024 3C4A     		ldr	r2, .L21+4
  274 0026 1A60     		str	r2, [r3]	@ float
- 121:Core/Src/main.c ****   servoConfig.minAngle  = -90;
- 275              		.loc 1 121 3 is_stmt 1 view .LVU78
- 121:Core/Src/main.c ****   servoConfig.minAngle  = -90;
- 276              		.loc 1 121 25 is_stmt 0 view .LVU79
+ 129:Core/Src/main.c ****   servoConfig.minAngle  = -90;
+ 275              		.loc 1 129 3 is_stmt 1 view .LVU78
+ 129:Core/Src/main.c ****   servoConfig.minAngle  = -90;
+ 276              		.loc 1 129 25 is_stmt 0 view .LVU79
  277 0028 4FF07852 		mov	r2, #1040187392
  278 002c 5A60     		str	r2, [r3, #4]	@ float
- 122:Core/Src/main.c ****   servoConfig.minAngle  = 90;
- 279              		.loc 1 122 3 is_stmt 1 view .LVU80
- 122:Core/Src/main.c ****   servoConfig.minAngle  = 90;
- 280              		.loc 1 122 25 is_stmt 0 view .LVU81
+ 130:Core/Src/main.c ****   servoConfig.minAngle  = 90;
+ 279              		.loc 1 130 3 is_stmt 1 view .LVU80
+ 130:Core/Src/main.c ****   servoConfig.minAngle  = 90;
+ 280              		.loc 1 130 25 is_stmt 0 view .LVU81
  281 002e A622     		movs	r2, #166
  282 0030 1A72     		strb	r2, [r3, #8]
- 123:Core/Src/main.c **** 
- 283              		.loc 1 123 3 is_stmt 1 view .LVU82
- 123:Core/Src/main.c **** 
- 284              		.loc 1 123 25 is_stmt 0 view .LVU83
+ 131:Core/Src/main.c **** 
+ 283              		.loc 1 131 3 is_stmt 1 view .LVU82
+ 131:Core/Src/main.c **** 
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 15
+
+
+ 284              		.loc 1 131 25 is_stmt 0 view .LVU83
  285 0032 5A22     		movs	r2, #90
  286 0034 1A72     		strb	r2, [r3, #8]
- 125:Core/Src/main.c ****   servoInstance.channel = TIM_CHANNEL_2;
- 287              		.loc 1 125 3 is_stmt 1 view .LVU84
- 125:Core/Src/main.c ****   servoInstance.channel = TIM_CHANNEL_2;
- 288              		.loc 1 125 25 is_stmt 0 view .LVU85
- 289 0036 4948     		ldr	r0, .L26+8
- 290 0038 494A     		ldr	r2, .L26+12
+ 133:Core/Src/main.c ****   servoInstance.channel = TIM_CHANNEL_2;
+ 287              		.loc 1 133 3 is_stmt 1 view .LVU84
+ 133:Core/Src/main.c ****   servoInstance.channel = TIM_CHANNEL_2;
+ 288              		.loc 1 133 25 is_stmt 0 view .LVU85
+ 289 0036 3948     		ldr	r0, .L21+8
+ 290 0038 394A     		ldr	r2, .L21+12
  291 003a 0260     		str	r2, [r0]
- 126:Core/Src/main.c ****   servoInstance.config  = &servoConfig;
- 292              		.loc 1 126 3 is_stmt 1 view .LVU86
- 126:Core/Src/main.c ****   servoInstance.config  = &servoConfig;
- 293              		.loc 1 126 25 is_stmt 0 view .LVU87
+ 134:Core/Src/main.c ****   servoInstance.config  = &servoConfig;
+ 292              		.loc 1 134 3 is_stmt 1 view .LVU86
+ 134:Core/Src/main.c ****   servoInstance.config  = &servoConfig;
+ 293              		.loc 1 134 25 is_stmt 0 view .LVU87
  294 003c 0422     		movs	r2, #4
  295 003e 0271     		strb	r2, [r0, #4]
- 127:Core/Src/main.c **** 
- 296              		.loc 1 127 3 is_stmt 1 view .LVU88
- 127:Core/Src/main.c **** 
- 297              		.loc 1 127 25 is_stmt 0 view .LVU89
+ 135:Core/Src/main.c **** 
+ 296              		.loc 1 135 3 is_stmt 1 view .LVU88
+ 135:Core/Src/main.c **** 
+ 297              		.loc 1 135 25 is_stmt 0 view .LVU89
  298 0040 8360     		str	r3, [r0, #8]
- 129:Core/Src/main.c ****   if(servoError != SERVO_OK){
- 299              		.loc 1 129 3 is_stmt 1 view .LVU90
- 129:Core/Src/main.c ****   if(servoError != SERVO_OK){
- 300              		.loc 1 129 16 is_stmt 0 view .LVU91
+ 137:Core/Src/main.c ****   if(servoError != SERVO_OK){
+ 299              		.loc 1 137 3 is_stmt 1 view .LVU90
+ 137:Core/Src/main.c ****   if(servoError != SERVO_OK){
+ 300              		.loc 1 137 16 is_stmt 0 view .LVU91
  301 0042 FFF7FEFF 		bl	Servo_Init
  302              	.LVL15:
- 129:Core/Src/main.c ****   if(servoError != SERVO_OK){
- 303              		.loc 1 129 14 view .LVU92
- 304 0046 474B     		ldr	r3, .L26+16
+ 137:Core/Src/main.c ****   if(servoError != SERVO_OK){
+ 303              		.loc 1 137 14 view .LVU92
+ 304 0046 374B     		ldr	r3, .L21+16
  305 0048 1870     		strb	r0, [r3]
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 15
-
-
- 130:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 306              		.loc 1 130 3 is_stmt 1 view .LVU93
- 130:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 307              		.loc 1 130 5 is_stmt 0 view .LVU94
+ 138:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+ 306              		.loc 1 138 3 is_stmt 1 view .LVU93
+ 138:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+ 307              		.loc 1 138 5 is_stmt 0 view .LVU94
  308 004a 28B1     		cbz	r0, .L14
- 131:Core/Src/main.c ****     while(1);
- 309              		.loc 1 131 5 is_stmt 1 view .LVU95
+ 139:Core/Src/main.c ****     while(1);
+ 309              		.loc 1 139 5 is_stmt 1 view .LVU95
  310 004c 0122     		movs	r2, #1
  311 004e 2021     		movs	r1, #32
- 312 0050 4548     		ldr	r0, .L26+20
+ 312 0050 3548     		ldr	r0, .L21+20
  313 0052 FFF7FEFF 		bl	HAL_GPIO_WritePin
  314              	.LVL16:
  315              	.L15:
- 132:Core/Src/main.c ****   }
- 316              		.loc 1 132 5 discriminator 1 view .LVU96
- 132:Core/Src/main.c ****   }
- 317              		.loc 1 132 10 discriminator 1 view .LVU97
+ 140:Core/Src/main.c ****   }
+ 316              		.loc 1 140 5 discriminator 1 view .LVU96
+ 140:Core/Src/main.c ****   }
+ 317              		.loc 1 140 10 discriminator 1 view .LVU97
  318 0056 FEE7     		b	.L15
  319              	.L14:
- 135:Core/Src/main.c ****   actConfig.Max_Pulse   = 2100;
- 320              		.loc 1 135 3 view .LVU98
- 135:Core/Src/main.c ****   actConfig.Max_Pulse   = 2100;
- 321              		.loc 1 135 25 is_stmt 0 view .LVU99
- 322 0058 444B     		ldr	r3, .L26+24
+ 143:Core/Src/main.c ****   actConfig.Max_Pulse   = 2100;
+ 320              		.loc 1 143 3 view .LVU98
+ 143:Core/Src/main.c ****   actConfig.Max_Pulse   = 2100;
+ 321              		.loc 1 143 25 is_stmt 0 view .LVU99
+ 322 0058 344B     		ldr	r3, .L21+24
  323 005a 4FF46172 		mov	r2, #900
  324 005e 1A80     		strh	r2, [r3]	@ movhi
- 136:Core/Src/main.c ****   actConfig.Min_Length  = 0;
- 325              		.loc 1 136 3 is_stmt 1 view .LVU100
- 136:Core/Src/main.c ****   actConfig.Min_Length  = 0;
- 326              		.loc 1 136 25 is_stmt 0 view .LVU101
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 16
+
+
+ 144:Core/Src/main.c ****   actConfig.Min_Length  = 0;
+ 325              		.loc 1 144 3 is_stmt 1 view .LVU100
+ 144:Core/Src/main.c ****   actConfig.Min_Length  = 0;
+ 326              		.loc 1 144 25 is_stmt 0 view .LVU101
  327 0060 40F63402 		movw	r2, #2100
  328 0064 5A80     		strh	r2, [r3, #2]	@ movhi
- 137:Core/Src/main.c ****   actConfig.Max_Length  = 30;
- 329              		.loc 1 137 3 is_stmt 1 view .LVU102
- 137:Core/Src/main.c ****   actConfig.Max_Length  = 30;
- 330              		.loc 1 137 25 is_stmt 0 view .LVU103
+ 145:Core/Src/main.c ****   actConfig.Max_Length  = 30;
+ 329              		.loc 1 145 3 is_stmt 1 view .LVU102
+ 145:Core/Src/main.c ****   actConfig.Max_Length  = 30;
+ 330              		.loc 1 145 25 is_stmt 0 view .LVU103
  331 0066 0022     		movs	r2, #0
  332 0068 1A71     		strb	r2, [r3, #4]
- 138:Core/Src/main.c **** 
- 333              		.loc 1 138 3 is_stmt 1 view .LVU104
- 138:Core/Src/main.c **** 
- 334              		.loc 1 138 25 is_stmt 0 view .LVU105
+ 146:Core/Src/main.c **** 
+ 333              		.loc 1 146 3 is_stmt 1 view .LVU104
+ 146:Core/Src/main.c **** 
+ 334              		.loc 1 146 25 is_stmt 0 view .LVU105
  335 006a 1E21     		movs	r1, #30
  336 006c 5971     		strb	r1, [r3, #5]
- 140:Core/Src/main.c ****   actInstance.Channel   = TIM_CHANNEL_1;
- 337              		.loc 1 140 3 is_stmt 1 view .LVU106
- 140:Core/Src/main.c ****   actInstance.Channel   = TIM_CHANNEL_1;
- 338              		.loc 1 140 25 is_stmt 0 view .LVU107
- 339 006e 4048     		ldr	r0, .L26+28
- 340 0070 3B49     		ldr	r1, .L26+12
+ 148:Core/Src/main.c ****   actInstance.Channel   = TIM_CHANNEL_1;
+ 337              		.loc 1 148 3 is_stmt 1 view .LVU106
+ 148:Core/Src/main.c ****   actInstance.Channel   = TIM_CHANNEL_1;
+ 338              		.loc 1 148 25 is_stmt 0 view .LVU107
+ 339 006e 3048     		ldr	r0, .L21+28
+ 340 0070 2B49     		ldr	r1, .L21+12
  341 0072 0160     		str	r1, [r0]
- 141:Core/Src/main.c ****   actInstance.config    = &actConfig;
- 342              		.loc 1 141 3 is_stmt 1 view .LVU108
- 141:Core/Src/main.c ****   actInstance.config    = &actConfig;
- 343              		.loc 1 141 25 is_stmt 0 view .LVU109
+ 149:Core/Src/main.c ****   actInstance.config    = &actConfig;
+ 342              		.loc 1 149 3 is_stmt 1 view .LVU108
+ 149:Core/Src/main.c ****   actInstance.config    = &actConfig;
+ 343              		.loc 1 149 25 is_stmt 0 view .LVU109
  344 0074 0271     		strb	r2, [r0, #4]
- 142:Core/Src/main.c **** 
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 16
-
-
- 345              		.loc 1 142 3 is_stmt 1 view .LVU110
- 142:Core/Src/main.c **** 
- 346              		.loc 1 142 25 is_stmt 0 view .LVU111
+ 150:Core/Src/main.c **** 
+ 345              		.loc 1 150 3 is_stmt 1 view .LVU110
+ 150:Core/Src/main.c **** 
+ 346              		.loc 1 150 25 is_stmt 0 view .LVU111
  347 0076 8360     		str	r3, [r0, #8]
- 144:Core/Src/main.c ****   if(actError != ACTUATOR_OK){
- 348              		.loc 1 144 3 is_stmt 1 view .LVU112
- 144:Core/Src/main.c ****   if(actError != ACTUATOR_OK){
- 349              		.loc 1 144 14 is_stmt 0 view .LVU113
+ 152:Core/Src/main.c ****   if(actError != ACTUATOR_OK){
+ 348              		.loc 1 152 3 is_stmt 1 view .LVU112
+ 152:Core/Src/main.c ****   if(actError != ACTUATOR_OK){
+ 349              		.loc 1 152 14 is_stmt 0 view .LVU113
  350 0078 FFF7FEFF 		bl	Actuator_Init
  351              	.LVL17:
- 144:Core/Src/main.c ****   if(actError != ACTUATOR_OK){
- 352              		.loc 1 144 12 view .LVU114
- 353 007c 3D4B     		ldr	r3, .L26+32
+ 152:Core/Src/main.c ****   if(actError != ACTUATOR_OK){
+ 352              		.loc 1 152 12 view .LVU114
+ 353 007c 2D4B     		ldr	r3, .L21+32
  354 007e 1870     		strb	r0, [r3]
- 145:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 355              		.loc 1 145 3 is_stmt 1 view .LVU115
- 145:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 356              		.loc 1 145 5 is_stmt 0 view .LVU116
+ 153:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+ 355              		.loc 1 153 3 is_stmt 1 view .LVU115
+ 153:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+ 356              		.loc 1 153 5 is_stmt 0 view .LVU116
  357 0080 28B1     		cbz	r0, .L16
- 146:Core/Src/main.c ****     while(1);
- 358              		.loc 1 146 5 is_stmt 1 view .LVU117
+ 154:Core/Src/main.c ****     while(1);
+ 358              		.loc 1 154 5 is_stmt 1 view .LVU117
  359 0082 0122     		movs	r2, #1
  360 0084 2021     		movs	r1, #32
- 361 0086 3848     		ldr	r0, .L26+20
+ 361 0086 2848     		ldr	r0, .L21+20
  362 0088 FFF7FEFF 		bl	HAL_GPIO_WritePin
  363              	.LVL18:
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 17
+
+
  364              	.L17:
- 147:Core/Src/main.c ****   }
- 365              		.loc 1 147 5 discriminator 2 view .LVU118
- 147:Core/Src/main.c ****   }
- 366              		.loc 1 147 10 discriminator 2 view .LVU119
+ 155:Core/Src/main.c ****   }
+ 365              		.loc 1 155 5 discriminator 2 view .LVU118
+ 155:Core/Src/main.c ****   }
+ 366              		.loc 1 155 10 discriminator 2 view .LVU119
  367 008c FEE7     		b	.L17
  368              	.L16:
- 150:Core/Src/main.c **** 
- 369              		.loc 1 150 3 view .LVU120
- 370 008e 3848     		ldr	r0, .L26+28
+ 158:Core/Src/main.c **** 
+ 369              		.loc 1 158 3 view .LVU120
+ 370 008e 2848     		ldr	r0, .L21+28
  371 0090 FFF7FEFF 		bl	Actuator_Init
  372              	.LVL19:
- 152:Core/Src/main.c ****   dcMotorConfig.Max_Speed = 100;
- 373              		.loc 1 152 3 view .LVU121
- 152:Core/Src/main.c ****   dcMotorConfig.Max_Speed = 100;
- 374              		.loc 1 152 27 is_stmt 0 view .LVU122
- 375 0094 384B     		ldr	r3, .L26+36
+ 160:Core/Src/main.c ****   dcMotorConfig.Max_Speed = 100;
+ 373              		.loc 1 160 3 view .LVU121
+ 160:Core/Src/main.c ****   dcMotorConfig.Max_Speed = 100;
+ 374              		.loc 1 160 27 is_stmt 0 view .LVU122
+ 375 0094 284B     		ldr	r3, .L21+36
  376 0096 0025     		movs	r5, #0
  377 0098 1D70     		strb	r5, [r3]
- 153:Core/Src/main.c **** 
- 378              		.loc 1 153 3 is_stmt 1 view .LVU123
- 153:Core/Src/main.c **** 
- 379              		.loc 1 153 27 is_stmt 0 view .LVU124
+ 161:Core/Src/main.c **** 
+ 378              		.loc 1 161 3 is_stmt 1 view .LVU123
+ 161:Core/Src/main.c **** 
+ 379              		.loc 1 161 27 is_stmt 0 view .LVU124
  380 009a 6422     		movs	r2, #100
  381 009c 5A70     		strb	r2, [r3, #1]
- 155:Core/Src/main.c ****   dcMotor.IN1_Channel   = TIM_CHANNEL_1;
- 382              		.loc 1 155 3 is_stmt 1 view .LVU125
- 155:Core/Src/main.c ****   dcMotor.IN1_Channel   = TIM_CHANNEL_1;
- 383              		.loc 1 155 25 is_stmt 0 view .LVU126
- 384 009e 374C     		ldr	r4, .L26+40
- 385 00a0 374A     		ldr	r2, .L26+44
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 17
-
-
+ 163:Core/Src/main.c ****   dcMotor.IN1_Channel   = TIM_CHANNEL_1;
+ 382              		.loc 1 163 3 is_stmt 1 view .LVU125
+ 163:Core/Src/main.c ****   dcMotor.IN1_Channel   = TIM_CHANNEL_1;
+ 383              		.loc 1 163 25 is_stmt 0 view .LVU126
+ 384 009e 274C     		ldr	r4, .L21+40
+ 385 00a0 274A     		ldr	r2, .L21+44
  386 00a2 2260     		str	r2, [r4]
- 156:Core/Src/main.c ****   dcMotor.IN2_Channel   = TIM_CHANNEL_2;
- 387              		.loc 1 156 3 is_stmt 1 view .LVU127
- 156:Core/Src/main.c ****   dcMotor.IN2_Channel   = TIM_CHANNEL_2;
- 388              		.loc 1 156 25 is_stmt 0 view .LVU128
+ 164:Core/Src/main.c ****   dcMotor.IN2_Channel   = TIM_CHANNEL_2;
+ 387              		.loc 1 164 3 is_stmt 1 view .LVU127
+ 164:Core/Src/main.c ****   dcMotor.IN2_Channel   = TIM_CHANNEL_2;
+ 388              		.loc 1 164 25 is_stmt 0 view .LVU128
  389 00a4 2571     		strb	r5, [r4, #4]
- 157:Core/Src/main.c ****   dcMotor.config        = &dcMotorConfig;
- 390              		.loc 1 157 3 is_stmt 1 view .LVU129
- 157:Core/Src/main.c ****   dcMotor.config        = &dcMotorConfig;
- 391              		.loc 1 157 25 is_stmt 0 view .LVU130
+ 165:Core/Src/main.c ****   dcMotor.config        = &dcMotorConfig;
+ 390              		.loc 1 165 3 is_stmt 1 view .LVU129
+ 165:Core/Src/main.c ****   dcMotor.config        = &dcMotorConfig;
+ 391              		.loc 1 165 25 is_stmt 0 view .LVU130
  392 00a6 0422     		movs	r2, #4
  393 00a8 6271     		strb	r2, [r4, #5]
- 158:Core/Src/main.c ****   
- 394              		.loc 1 158 3 is_stmt 1 view .LVU131
- 158:Core/Src/main.c ****   
- 395              		.loc 1 158 25 is_stmt 0 view .LVU132
+ 166:Core/Src/main.c ****   
+ 394              		.loc 1 166 3 is_stmt 1 view .LVU131
+ 166:Core/Src/main.c ****   
+ 395              		.loc 1 166 25 is_stmt 0 view .LVU132
  396 00aa E360     		str	r3, [r4, #12]
- 160:Core/Src/main.c **** 
- 397              		.loc 1 160 3 is_stmt 1 view .LVU133
+ 168:Core/Src/main.c **** 
+ 397              		.loc 1 168 3 is_stmt 1 view .LVU133
  398 00ac 2046     		mov	r0, r4
  399 00ae FFF7FEFF 		bl	DCMotor_Init
  400              	.LVL20:
- 162:Core/Src/main.c ****   HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
- 401              		.loc 1 162 3 view .LVU134
- 402 00b2 344E     		ldr	r6, .L26+48
- 403 00b4 3368     		ldr	r3, [r6]
- 404 00b6 48F6C522 		movw	r2, #35525
- 405 00ba 5A62     		str	r2, [r3, #36]
- 163:Core/Src/main.c **** 
- 406              		.loc 1 163 3 view .LVU135
- 407 00bc 3C21     		movs	r1, #60
- 408 00be 3046     		mov	r0, r6
- 409 00c0 FFF7FEFF 		bl	HAL_TIM_Encoder_Start
- 410              	.LVL21:
- 165:Core/Src/main.c ****   dcError = Drive_DCMotor(&dcMotor, 45, CLOCKWISE);
- 411              		.loc 1 165 3 view .LVU136
- 165:Core/Src/main.c ****   dcError = Drive_DCMotor(&dcMotor, 45, CLOCKWISE);
- 412              		.loc 1 165 16 is_stmt 0 view .LVU137
- 413 00c4 3368     		ldr	r3, [r6]
- 414 00c6 5A6A     		ldr	r2, [r3, #36]
- 165:Core/Src/main.c ****   dcError = Drive_DCMotor(&dcMotor, 45, CLOCKWISE);
- 415              		.loc 1 165 14 view .LVU138
- 416 00c8 2F4B     		ldr	r3, .L26+52
- 417 00ca 1A60     		str	r2, [r3]
- 166:Core/Src/main.c ****   if(dcError != DC_MOTOR_OK){
- 418              		.loc 1 166 3 is_stmt 1 view .LVU139
- 166:Core/Src/main.c ****   if(dcError != DC_MOTOR_OK){
- 419              		.loc 1 166 13 is_stmt 0 view .LVU140
- 420 00cc 2A46     		mov	r2, r5
- 421 00ce 2D21     		movs	r1, #45
- 422 00d0 2046     		mov	r0, r4
- 423 00d2 FFF7FEFF 		bl	Drive_DCMotor
- 424              	.LVL22:
- 166:Core/Src/main.c ****   if(dcError != DC_MOTOR_OK){
- 425              		.loc 1 166 11 view .LVU141
- 426 00d6 2D4B     		ldr	r3, .L26+56
- 427 00d8 1870     		strb	r0, [r3]
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 18
+ 170:Core/Src/main.c ****   encConfig.Default_Counter   = defaultValue;
+ 401              		.loc 1 170 3 view .LVU134
+ 170:Core/Src/main.c ****   encConfig.Default_Counter   = defaultValue;
+ 402              		.loc 1 170 31 is_stmt 0 view .LVU135
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 18
 
 
- 167:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 428              		.loc 1 167 3 is_stmt 1 view .LVU142
- 167:Core/Src/main.c ****     HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 429              		.loc 1 167 5 is_stmt 0 view .LVU143
- 430 00da 28B1     		cbz	r0, .L18
- 168:Core/Src/main.c ****     while(1);
- 431              		.loc 1 168 5 is_stmt 1 view .LVU144
- 432 00dc 0122     		movs	r2, #1
- 433 00de 2021     		movs	r1, #32
- 434 00e0 2148     		ldr	r0, .L26+20
- 435 00e2 FFF7FEFF 		bl	HAL_GPIO_WritePin
- 436              	.LVL23:
- 437              	.L19:
- 169:Core/Src/main.c ****   }
- 438              		.loc 1 169 5 discriminator 3 view .LVU145
- 169:Core/Src/main.c ****   }
- 439              		.loc 1 169 10 discriminator 3 view .LVU146
- 440 00e6 FEE7     		b	.L19
- 441              	.L18:
- 171:Core/Src/main.c **** 
- 442              		.loc 1 171 3 view .LVU147
- 443 00e8 4FF4FA70 		mov	r0, #500
- 444 00ec FFF7FEFF 		bl	HAL_Delay
- 445              	.LVL24:
- 446              	.L20:
- 177:Core/Src/main.c ****   {
- 447              		.loc 1 177 3 view .LVU148
- 179:Core/Src/main.c ****     if(encoderCnt >= 44406){
- 448              		.loc 1 179 5 view .LVU149
- 179:Core/Src/main.c ****     if(encoderCnt >= 44406){
- 449              		.loc 1 179 18 is_stmt 0 view .LVU150
- 450 00f0 244B     		ldr	r3, .L26+48
- 451 00f2 1B68     		ldr	r3, [r3]
- 452 00f4 5B6A     		ldr	r3, [r3, #36]
- 179:Core/Src/main.c ****     if(encoderCnt >= 44406){
- 453              		.loc 1 179 16 view .LVU151
- 454 00f6 244A     		ldr	r2, .L26+52
- 455 00f8 1360     		str	r3, [r2]
- 180:Core/Src/main.c ****       Stop_DCMotor(&dcMotor);
- 456              		.loc 1 180 5 is_stmt 1 view .LVU152
- 180:Core/Src/main.c ****       Stop_DCMotor(&dcMotor);
- 457              		.loc 1 180 7 is_stmt 0 view .LVU153
- 458 00fa 4AF67552 		movw	r2, #44405
- 459 00fe 9342     		cmp	r3, r2
- 460 0100 F6D9     		bls	.L20
- 181:Core/Src/main.c ****       HAL_Delay(1000);
- 461              		.loc 1 181 7 is_stmt 1 view .LVU154
- 462 0102 1E4C     		ldr	r4, .L26+40
- 463 0104 2046     		mov	r0, r4
- 464 0106 FFF7FEFF 		bl	Stop_DCMotor
- 465              	.LVL25:
- 182:Core/Src/main.c ****       dcError = Drive_DCMotor(&dcMotor, 42, COUNTER_CLOCKWISE);
- 466              		.loc 1 182 7 view .LVU155
- 467 010a 4FF47A70 		mov	r0, #1000
- 468 010e FFF7FEFF 		bl	HAL_Delay
- 469              	.LVL26:
- 183:Core/Src/main.c ****       while(!motorDone){
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 19
+ 403 00b2 244B     		ldr	r3, .L21+48
+ 404 00b4 1D81     		strh	r5, [r3, #8]	@ movhi
+ 171:Core/Src/main.c ****   encConfig.Degree_Per_Pulse  = (float)360 / defaultValue;
+ 405              		.loc 1 171 3 is_stmt 1 view .LVU136
+ 171:Core/Src/main.c ****   encConfig.Degree_Per_Pulse  = (float)360 / defaultValue;
+ 406              		.loc 1 171 31 is_stmt 0 view .LVU137
+ 407 00b6 48F6C522 		movw	r2, #35525
+ 408 00ba 1A60     		str	r2, [r3]
+ 172:Core/Src/main.c ****   encConfig.Min_Angle         = -360;
+ 409              		.loc 1 172 3 is_stmt 1 view .LVU138
+ 172:Core/Src/main.c ****   encConfig.Min_Angle         = -360;
+ 410              		.loc 1 172 31 is_stmt 0 view .LVU139
+ 411 00bc 224A     		ldr	r2, .L21+52
+ 412 00be 5A60     		str	r2, [r3, #4]	@ float
+ 173:Core/Src/main.c ****   encConfig.Max_Angle         = 360;
+ 413              		.loc 1 173 3 is_stmt 1 view .LVU140
+ 173:Core/Src/main.c ****   encConfig.Max_Angle         = 360;
+ 414              		.loc 1 173 31 is_stmt 0 view .LVU141
+ 415 00c0 4FF69862 		movw	r2, #65176
+ 416 00c4 5A81     		strh	r2, [r3, #10]	@ movhi
+ 174:Core/Src/main.c **** 
+ 417              		.loc 1 174 3 is_stmt 1 view .LVU142
+ 174:Core/Src/main.c **** 
+ 418              		.loc 1 174 31 is_stmt 0 view .LVU143
+ 419 00c6 4FF4B472 		mov	r2, #360
+ 420 00ca 9A81     		strh	r2, [r3, #12]	@ movhi
+ 176:Core/Src/main.c ****   encInstance.encConfig       = &encConfig;
+ 421              		.loc 1 176 3 is_stmt 1 view .LVU144
+ 176:Core/Src/main.c ****   encInstance.encConfig       = &encConfig;
+ 422              		.loc 1 176 31 is_stmt 0 view .LVU145
+ 423 00cc 1F48     		ldr	r0, .L21+56
+ 424 00ce 204A     		ldr	r2, .L21+60
+ 425 00d0 0260     		str	r2, [r0]
+ 177:Core/Src/main.c ****   encInstance.motorInstance   = &dcMotor;
+ 426              		.loc 1 177 3 is_stmt 1 view .LVU146
+ 177:Core/Src/main.c ****   encInstance.motorInstance   = &dcMotor;
+ 427              		.loc 1 177 31 is_stmt 0 view .LVU147
+ 428 00d2 4360     		str	r3, [r0, #4]
+ 178:Core/Src/main.c **** 
+ 429              		.loc 1 178 3 is_stmt 1 view .LVU148
+ 178:Core/Src/main.c **** 
+ 430              		.loc 1 178 31 is_stmt 0 view .LVU149
+ 431 00d4 8460     		str	r4, [r0, #8]
+ 180:Core/Src/main.c **** 
+ 432              		.loc 1 180 3 is_stmt 1 view .LVU150
+ 433 00d6 FFF7FEFF 		bl	DCMotor_Encoder_Init
+ 434              	.LVL21:
+ 435              	.L19:
+ 199:Core/Src/main.c ****   {
+ 436              		.loc 1 199 3 view .LVU151
+ 437              	.LBB8:
+ 217:Core/Src/main.c ****   while(!inUART);
+ 438              		.loc 1 217 3 view .LVU152
+ 439 00da 0422     		movs	r2, #4
+ 440 00dc 1D49     		ldr	r1, .L21+64
+ 441 00de 1E48     		ldr	r0, .L21+68
+ 442 00e0 FFF7FEFF 		bl	HAL_UART_Receive_IT
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 19
 
 
- 470              		.loc 1 183 7 view .LVU156
- 183:Core/Src/main.c ****       while(!motorDone){
- 471              		.loc 1 183 17 is_stmt 0 view .LVU157
- 472 0112 0122     		movs	r2, #1
- 473 0114 2A21     		movs	r1, #42
- 474 0116 2046     		mov	r0, r4
- 475 0118 FFF7FEFF 		bl	Drive_DCMotor
- 476              	.LVL27:
- 183:Core/Src/main.c ****       while(!motorDone){
- 477              		.loc 1 183 15 view .LVU158
- 478 011c 1B4B     		ldr	r3, .L26+56
- 479 011e 1870     		strb	r0, [r3]
- 184:Core/Src/main.c ****         encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
- 480              		.loc 1 184 7 is_stmt 1 view .LVU159
- 481              	.L22:
- 184:Core/Src/main.c ****         encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
- 482              		.loc 1 184 13 view .LVU160
- 483 0120 1B4B     		ldr	r3, .L26+60
- 484 0122 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
- 485 0124 002B     		cmp	r3, #0
- 486 0126 E3D1     		bne	.L20
- 185:Core/Src/main.c ****         if(encoderCnt <= 35525){
- 487              		.loc 1 185 9 view .LVU161
- 185:Core/Src/main.c ****         if(encoderCnt <= 35525){
- 488              		.loc 1 185 22 is_stmt 0 view .LVU162
- 489 0128 164B     		ldr	r3, .L26+48
- 490 012a 1B68     		ldr	r3, [r3]
- 491 012c 5B6A     		ldr	r3, [r3, #36]
- 185:Core/Src/main.c ****         if(encoderCnt <= 35525){
- 492              		.loc 1 185 20 view .LVU163
- 493 012e 164A     		ldr	r2, .L26+52
- 494 0130 1360     		str	r3, [r2]
- 186:Core/Src/main.c ****           Stop_DCMotor(&dcMotor);
- 495              		.loc 1 186 9 is_stmt 1 view .LVU164
- 186:Core/Src/main.c ****           Stop_DCMotor(&dcMotor);
- 496              		.loc 1 186 11 is_stmt 0 view .LVU165
- 497 0132 48F6C522 		movw	r2, #35525
- 498 0136 9342     		cmp	r3, r2
- 499 0138 F2D8     		bhi	.L22
- 187:Core/Src/main.c ****           HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
- 500              		.loc 1 187 11 is_stmt 1 view .LVU166
- 501 013a 1048     		ldr	r0, .L26+40
- 502 013c FFF7FEFF 		bl	Stop_DCMotor
- 503              	.LVL28:
- 188:Core/Src/main.c ****           motorDone = 1;
- 504              		.loc 1 188 11 view .LVU167
- 505 0140 0122     		movs	r2, #1
- 506 0142 2021     		movs	r1, #32
- 507 0144 0848     		ldr	r0, .L26+20
- 508 0146 FFF7FEFF 		bl	HAL_GPIO_WritePin
- 509              	.LVL29:
- 189:Core/Src/main.c ****         }
- 510              		.loc 1 189 11 view .LVU168
- 189:Core/Src/main.c ****         }
- 511              		.loc 1 189 21 is_stmt 0 view .LVU169
- 512 014a 114B     		ldr	r3, .L26+60
- 513 014c 0122     		movs	r2, #1
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 20
+ 443              	.LVL22:
+ 218:Core/Src/main.c ****   inUART = 0;
+ 444              		.loc 1 218 3 view .LVU153
+ 445              	.L18:
+ 218:Core/Src/main.c ****   inUART = 0;
+ 446              		.loc 1 218 9 discriminator 1 view .LVU154
+ 447 00e4 1D4B     		ldr	r3, .L21+72
+ 448 00e6 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 449 00e8 002B     		cmp	r3, #0
+ 450 00ea FBD0     		beq	.L18
+ 219:Core/Src/main.c ****   userBalls = atoi(uartBuf);
+ 451              		.loc 1 219 3 view .LVU155
+ 219:Core/Src/main.c ****   userBalls = atoi(uartBuf);
+ 452              		.loc 1 219 10 is_stmt 0 view .LVU156
+ 453 00ec 1B4B     		ldr	r3, .L21+72
+ 454 00ee 0022     		movs	r2, #0
+ 455 00f0 1A70     		strb	r2, [r3]
+ 220:Core/Src/main.c ****   Drive_DCMotor_Angle(&encInstance, userBalls);
+ 456              		.loc 1 220 3 is_stmt 1 view .LVU157
+ 220:Core/Src/main.c ****   Drive_DCMotor_Angle(&encInstance, userBalls);
+ 457              		.loc 1 220 15 is_stmt 0 view .LVU158
+ 458 00f2 1848     		ldr	r0, .L21+64
+ 459 00f4 FFF7FEFF 		bl	atoi
+ 460              	.LVL23:
+ 220:Core/Src/main.c ****   Drive_DCMotor_Angle(&encInstance, userBalls);
+ 461              		.loc 1 220 13 view .LVU159
+ 462 00f8 01B2     		sxth	r1, r0
+ 463 00fa 194B     		ldr	r3, .L21+76
+ 464 00fc 1980     		strh	r1, [r3]	@ movhi
+ 221:Core/Src/main.c ****   HAL_UART_Transmit(&huart2, &HANDSHAKE, 1, 100);
+ 465              		.loc 1 221 3 is_stmt 1 view .LVU160
+ 466 00fe 1348     		ldr	r0, .L21+56
+ 467 0100 FFF7FEFF 		bl	Drive_DCMotor_Angle
+ 468              	.LVL24:
+ 222:Core/Src/main.c **** 
+ 469              		.loc 1 222 3 view .LVU161
+ 470 0104 6423     		movs	r3, #100
+ 471 0106 0122     		movs	r2, #1
+ 472 0108 1649     		ldr	r1, .L21+80
+ 473 010a 1348     		ldr	r0, .L21+68
+ 474 010c FFF7FEFF 		bl	HAL_UART_Transmit
+ 475              	.LVL25:
+ 476              	.LBE8:
+ 199:Core/Src/main.c ****   {
+ 477              		.loc 1 199 9 view .LVU162
+ 200:Core/Src/main.c ****     // encoderCnt = __HAL_TIM_GET_COUNTER(&htim5);
+ 478              		.loc 1 200 3 is_stmt 0 view .LVU163
+ 479 0110 E3E7     		b	.L19
+ 480              	.L22:
+ 481 0112 00BF     		.align	2
+ 482              	.L21:
+ 483 0114 00000000 		.word	.LANCHOR0
+ 484 0118 CDCCCC3C 		.word	1020054733
+ 485 011c 00000000 		.word	.LANCHOR1
+ 486 0120 00000000 		.word	htim3
+ 487 0124 00000000 		.word	.LANCHOR2
+ 488 0128 00000240 		.word	1073872896
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 20
 
 
- 514 014e 1A70     		strb	r2, [r3]
- 515 0150 E6E7     		b	.L22
- 516              	.L27:
- 517 0152 00BF     		.align	2
- 518              	.L26:
- 519 0154 00000000 		.word	.LANCHOR0
- 520 0158 CDCCCC3C 		.word	1020054733
- 521 015c 00000000 		.word	.LANCHOR1
- 522 0160 00000000 		.word	htim3
- 523 0164 00000000 		.word	.LANCHOR2
- 524 0168 00000240 		.word	1073872896
- 525 016c 00000000 		.word	.LANCHOR3
- 526 0170 00000000 		.word	.LANCHOR4
- 527 0174 00000000 		.word	.LANCHOR5
- 528 0178 00000000 		.word	.LANCHOR6
- 529 017c 00000000 		.word	.LANCHOR7
- 530 0180 00000000 		.word	htim12
- 531 0184 00000000 		.word	htim5
- 532 0188 00000000 		.word	.LANCHOR8
- 533 018c 00000000 		.word	.LANCHOR9
- 534 0190 00000000 		.word	.LANCHOR10
- 535              		.cfi_endproc
- 536              	.LFE130:
- 538              		.global	motorDone
- 539              		.global	encoderCnt
- 540              		.global	dcError
- 541              		.global	actError
- 542              		.global	servoError
- 543              		.global	dcMotor
- 544              		.global	dcMotorConfig
- 545              		.global	actInstance
- 546              		.global	actConfig
- 547              		.global	servoInstance
- 548              		.global	servoConfig
- 549              		.section	.bss.actConfig,"aw",%nobits
- 550              		.align	2
- 551              		.set	.LANCHOR3,. + 0
- 554              	actConfig:
- 555 0000 00000000 		.space	6
- 555      0000
- 556              		.section	.bss.actError,"aw",%nobits
- 557              		.set	.LANCHOR5,. + 0
- 560              	actError:
- 561 0000 00       		.space	1
- 562              		.section	.bss.actInstance,"aw",%nobits
- 563              		.align	2
- 564              		.set	.LANCHOR4,. + 0
- 567              	actInstance:
- 568 0000 00000000 		.space	16
- 568      00000000 
- 568      00000000 
- 568      00000000 
- 569              		.section	.bss.dcError,"aw",%nobits
- 570              		.set	.LANCHOR9,. + 0
- 573              	dcError:
- 574 0000 00       		.space	1
- 575              		.section	.bss.dcMotor,"aw",%nobits
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 21
+ 489 012c 00000000 		.word	.LANCHOR3
+ 490 0130 00000000 		.word	.LANCHOR4
+ 491 0134 00000000 		.word	.LANCHOR5
+ 492 0138 00000000 		.word	.LANCHOR6
+ 493 013c 00000000 		.word	.LANCHOR7
+ 494 0140 00000000 		.word	htim12
+ 495 0144 00000000 		.word	.LANCHOR8
+ 496 0148 DB07263C 		.word	1009125339
+ 497 014c 00000000 		.word	.LANCHOR9
+ 498 0150 00000000 		.word	htim5
+ 499 0154 00000000 		.word	.LANCHOR10
+ 500 0158 00000000 		.word	huart2
+ 501 015c 00000000 		.word	.LANCHOR11
+ 502 0160 00000000 		.word	.LANCHOR12
+ 503 0164 00000000 		.word	.LANCHOR13
+ 504              		.cfi_endproc
+ 505              	.LFE130:
+ 507              		.section	.text.HAL_UART_RxCpltCallback,"ax",%progbits
+ 508              		.align	1
+ 509              		.global	HAL_UART_RxCpltCallback
+ 510              		.syntax unified
+ 511              		.thumb
+ 512              		.thumb_func
+ 514              	HAL_UART_RxCpltCallback:
+ 515              	.LVL26:
+ 516              	.LFB133:
+ 301:Core/Src/main.c ****   /* USER CODE END Error_Handler_Debug */
+ 302:Core/Src/main.c **** }
+ 303:Core/Src/main.c **** 
+ 304:Core/Src/main.c **** void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+ 517              		.loc 1 304 56 is_stmt 1 view -0
+ 518              		.cfi_startproc
+ 519              		@ args = 0, pretend = 0, frame = 0
+ 520              		@ frame_needed = 0, uses_anonymous_args = 0
+ 521              		@ link register save eliminated.
+ 305:Core/Src/main.c ****   inUART = 1;
+ 522              		.loc 1 305 3 view .LVU165
+ 523              		.loc 1 305 10 is_stmt 0 view .LVU166
+ 524 0000 014B     		ldr	r3, .L24
+ 525 0002 0122     		movs	r2, #1
+ 526 0004 1A70     		strb	r2, [r3]
+ 306:Core/Src/main.c **** }
+ 527              		.loc 1 306 1 view .LVU167
+ 528 0006 7047     		bx	lr
+ 529              	.L25:
+ 530              		.align	2
+ 531              	.L24:
+ 532 0008 00000000 		.word	.LANCHOR11
+ 533              		.cfi_endproc
+ 534              	.LFE133:
+ 536              		.global	userBalls
+ 537              		.global	HANDSHAKE
+ 538              		.global	inUART
+ 539              		.global	defaultPrint
+ 540              		.global	uartBuf
+ 541              		.global	motorDone
+ 542              		.global	encoderCnt
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 21
 
 
- 576              		.align	2
- 577              		.set	.LANCHOR7,. + 0
- 580              	dcMotor:
- 581 0000 00000000 		.space	16
- 581      00000000 
- 581      00000000 
- 581      00000000 
- 582              		.section	.bss.dcMotorConfig,"aw",%nobits
- 583              		.align	2
- 584              		.set	.LANCHOR6,. + 0
- 587              	dcMotorConfig:
- 588 0000 0000     		.space	2
- 589              		.section	.bss.encoderCnt,"aw",%nobits
- 590              		.align	2
- 591              		.set	.LANCHOR8,. + 0
- 594              	encoderCnt:
- 595 0000 00000000 		.space	4
- 596              		.section	.bss.motorDone,"aw",%nobits
- 597              		.set	.LANCHOR10,. + 0
- 600              	motorDone:
- 601 0000 00       		.space	1
- 602              		.section	.bss.servoConfig,"aw",%nobits
- 603              		.align	2
- 604              		.set	.LANCHOR0,. + 0
- 607              	servoConfig:
- 608 0000 00000000 		.space	12
- 608      00000000 
- 608      00000000 
- 609              		.section	.bss.servoError,"aw",%nobits
- 610              		.set	.LANCHOR2,. + 0
- 613              	servoError:
- 614 0000 00       		.space	1
- 615              		.section	.bss.servoInstance,"aw",%nobits
- 616              		.align	2
- 617              		.set	.LANCHOR1,. + 0
- 620              	servoInstance:
- 621 0000 00000000 		.space	20
- 621      00000000 
- 621      00000000 
- 621      00000000 
- 621      00000000 
- 622              		.text
- 623              	.Letext0:
- 624              		.file 3 "c:\\users\\jacki\\appdata\\roaming\\code\\user\\globalstorage\\bmd.stm32-for-vscode\\@xpa
- 625              		.file 4 "c:\\users\\jacki\\appdata\\roaming\\code\\user\\globalstorage\\bmd.stm32-for-vscode\\@xpa
- 626              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f446xx.h"
- 627              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
- 628              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc_ex.h"
- 629              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h"
- 630              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h"
- 631              		.file 10 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
- 632              		.file 11 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h"
- 633              		.file 12 "Core/Inc/tim.h"
- 634              		.file 13 "Core/Inc/motor.h"
- 635              		.file 14 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
- 636              		.file 15 "Core/Inc/i2c.h"
- 637              		.file 16 "Core/Inc/usart.h"
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 22
+ 543              		.global	dcError
+ 544              		.global	actError
+ 545              		.global	servoError
+ 546              		.global	encInstance
+ 547              		.global	encConfig
+ 548              		.global	dcMotor
+ 549              		.global	dcMotorConfig
+ 550              		.global	actInstance
+ 551              		.global	actConfig
+ 552              		.global	servoInstance
+ 553              		.global	servoConfig
+ 554              		.section	.bss.actConfig,"aw",%nobits
+ 555              		.align	2
+ 556              		.set	.LANCHOR3,. + 0
+ 559              	actConfig:
+ 560 0000 00000000 		.space	6
+ 560      0000
+ 561              		.section	.bss.actError,"aw",%nobits
+ 562              		.set	.LANCHOR5,. + 0
+ 565              	actError:
+ 566 0000 00       		.space	1
+ 567              		.section	.bss.actInstance,"aw",%nobits
+ 568              		.align	2
+ 569              		.set	.LANCHOR4,. + 0
+ 572              	actInstance:
+ 573 0000 00000000 		.space	16
+ 573      00000000 
+ 573      00000000 
+ 573      00000000 
+ 574              		.section	.bss.dcError,"aw",%nobits
+ 577              	dcError:
+ 578 0000 00       		.space	1
+ 579              		.section	.bss.dcMotor,"aw",%nobits
+ 580              		.align	2
+ 581              		.set	.LANCHOR7,. + 0
+ 584              	dcMotor:
+ 585 0000 00000000 		.space	16
+ 585      00000000 
+ 585      00000000 
+ 585      00000000 
+ 586              		.section	.bss.dcMotorConfig,"aw",%nobits
+ 587              		.align	2
+ 588              		.set	.LANCHOR6,. + 0
+ 591              	dcMotorConfig:
+ 592 0000 0000     		.space	2
+ 593              		.section	.bss.encConfig,"aw",%nobits
+ 594              		.align	2
+ 595              		.set	.LANCHOR8,. + 0
+ 598              	encConfig:
+ 599 0000 00000000 		.space	16
+ 599      00000000 
+ 599      00000000 
+ 599      00000000 
+ 600              		.section	.bss.encInstance,"aw",%nobits
+ 601              		.align	2
+ 602              		.set	.LANCHOR9,. + 0
+ 605              	encInstance:
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 22
 
 
- 638              		.file 17 "Core/Inc/gpio.h"
- 639              		.file 18 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h"
- 640              		.file 19 "<built-in>"
-ARM GAS  C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s 			page 23
+ 606 0000 00000000 		.space	12
+ 606      00000000 
+ 606      00000000 
+ 607              		.section	.bss.encoderCnt,"aw",%nobits
+ 608              		.align	2
+ 611              	encoderCnt:
+ 612 0000 00000000 		.space	4
+ 613              		.section	.bss.inUART,"aw",%nobits
+ 614              		.set	.LANCHOR11,. + 0
+ 617              	inUART:
+ 618 0000 00       		.space	1
+ 619              		.section	.bss.motorDone,"aw",%nobits
+ 622              	motorDone:
+ 623 0000 00       		.space	1
+ 624              		.section	.bss.servoConfig,"aw",%nobits
+ 625              		.align	2
+ 626              		.set	.LANCHOR0,. + 0
+ 629              	servoConfig:
+ 630 0000 00000000 		.space	12
+ 630      00000000 
+ 630      00000000 
+ 631              		.section	.bss.servoError,"aw",%nobits
+ 632              		.set	.LANCHOR2,. + 0
+ 635              	servoError:
+ 636 0000 00       		.space	1
+ 637              		.section	.bss.servoInstance,"aw",%nobits
+ 638              		.align	2
+ 639              		.set	.LANCHOR1,. + 0
+ 642              	servoInstance:
+ 643 0000 00000000 		.space	20
+ 643      00000000 
+ 643      00000000 
+ 643      00000000 
+ 643      00000000 
+ 644              		.section	.bss.uartBuf,"aw",%nobits
+ 645              		.align	2
+ 646              		.set	.LANCHOR10,. + 0
+ 649              	uartBuf:
+ 650 0000 00000000 		.space	4
+ 651              		.section	.bss.userBalls,"aw",%nobits
+ 652              		.align	1
+ 653              		.set	.LANCHOR12,. + 0
+ 656              	userBalls:
+ 657 0000 0000     		.space	2
+ 658              		.section	.data.defaultPrint,"aw"
+ 659              		.align	2
+ 662              	defaultPrint:
+ 663 0000 506C6561 		.ascii	"Please Enter Desired Angle: \012\000"
+ 663      73652045 
+ 663      6E746572 
+ 663      20446573 
+ 663      69726564 
+ 664              		.section	.rodata.HANDSHAKE,"a"
+ 665              		.set	.LANCHOR13,. + 0
+ 668              	HANDSHAKE:
+ 669 0000 AA       		.byte	-86
+ 670              		.text
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 23
+
+
+ 671              	.Letext0:
+ 672              		.file 3 "c:\\users\\jacki\\appdata\\roaming\\code\\user\\globalstorage\\bmd.stm32-for-vscode\\@xpa
+ 673              		.file 4 "c:\\users\\jacki\\appdata\\roaming\\code\\user\\globalstorage\\bmd.stm32-for-vscode\\@xpa
+ 674              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f446xx.h"
+ 675              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 676              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc_ex.h"
+ 677              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h"
+ 678              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h"
+ 679              		.file 10 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 680              		.file 11 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h"
+ 681              		.file 12 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h"
+ 682              		.file 13 "Core/Inc/tim.h"
+ 683              		.file 14 "Core/Inc/usart.h"
+ 684              		.file 15 "Core/Inc/motor.h"
+ 685              		.file 16 "Core/Inc/i2c.h"
+ 686              		.file 17 "Core/Inc/gpio.h"
+ 687              		.file 18 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h"
+ 688              		.file 19 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
+ 689              		.file 20 "<built-in>"
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 24
 
 
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 main.c
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:20     .text.Error_Handler:0000000000000000 $t
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:26     .text.Error_Handler:0000000000000000 Error_Handler
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:59     .text.SystemClock_Config:0000000000000000 $t
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:65     .text.SystemClock_Config:0000000000000000 SystemClock_Config
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:223    .text.SystemClock_Config:00000000000000a8 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:229    .text.main:0000000000000000 $t
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:235    .text.main:0000000000000000 main
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:519    .text.main:0000000000000154 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:600    .bss.motorDone:0000000000000000 motorDone
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:594    .bss.encoderCnt:0000000000000000 encoderCnt
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:573    .bss.dcError:0000000000000000 dcError
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:560    .bss.actError:0000000000000000 actError
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:613    .bss.servoError:0000000000000000 servoError
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:580    .bss.dcMotor:0000000000000000 dcMotor
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:587    .bss.dcMotorConfig:0000000000000000 dcMotorConfig
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:567    .bss.actInstance:0000000000000000 actInstance
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:554    .bss.actConfig:0000000000000000 actConfig
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:620    .bss.servoInstance:0000000000000000 servoInstance
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:607    .bss.servoConfig:0000000000000000 servoConfig
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:550    .bss.actConfig:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:561    .bss.actError:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:563    .bss.actInstance:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:574    .bss.dcError:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:576    .bss.dcMotor:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:583    .bss.dcMotorConfig:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:590    .bss.encoderCnt:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:601    .bss.motorDone:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:603    .bss.servoConfig:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:614    .bss.servoError:0000000000000000 $d
-C:\Users\jacki\AppData\Local\Temp\cc7SjDgM.s:616    .bss.servoInstance:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:20     .text.Error_Handler:0000000000000000 $t
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:26     .text.Error_Handler:0000000000000000 Error_Handler
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:59     .text.SystemClock_Config:0000000000000000 $t
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:65     .text.SystemClock_Config:0000000000000000 SystemClock_Config
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:223    .text.SystemClock_Config:00000000000000a8 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:229    .text.main:0000000000000000 $t
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:235    .text.main:0000000000000000 main
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:483    .text.main:0000000000000114 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:508    .text.HAL_UART_RxCpltCallback:0000000000000000 $t
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:514    .text.HAL_UART_RxCpltCallback:0000000000000000 HAL_UART_RxCpltCallback
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:532    .text.HAL_UART_RxCpltCallback:0000000000000008 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:656    .bss.userBalls:0000000000000000 userBalls
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:668    .rodata.HANDSHAKE:0000000000000000 HANDSHAKE
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:617    .bss.inUART:0000000000000000 inUART
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:662    .data.defaultPrint:0000000000000000 defaultPrint
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:649    .bss.uartBuf:0000000000000000 uartBuf
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:622    .bss.motorDone:0000000000000000 motorDone
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:611    .bss.encoderCnt:0000000000000000 encoderCnt
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:577    .bss.dcError:0000000000000000 dcError
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:565    .bss.actError:0000000000000000 actError
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:635    .bss.servoError:0000000000000000 servoError
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:605    .bss.encInstance:0000000000000000 encInstance
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:598    .bss.encConfig:0000000000000000 encConfig
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:584    .bss.dcMotor:0000000000000000 dcMotor
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:591    .bss.dcMotorConfig:0000000000000000 dcMotorConfig
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:572    .bss.actInstance:0000000000000000 actInstance
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:559    .bss.actConfig:0000000000000000 actConfig
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:642    .bss.servoInstance:0000000000000000 servoInstance
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:629    .bss.servoConfig:0000000000000000 servoConfig
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:555    .bss.actConfig:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:566    .bss.actError:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:568    .bss.actInstance:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:578    .bss.dcError:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:580    .bss.dcMotor:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:587    .bss.dcMotorConfig:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:594    .bss.encConfig:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:601    .bss.encInstance:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:608    .bss.encoderCnt:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:618    .bss.inUART:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:623    .bss.motorDone:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:625    .bss.servoConfig:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:636    .bss.servoError:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:638    .bss.servoInstance:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:645    .bss.uartBuf:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:652    .bss.userBalls:0000000000000000 $d
+C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s:659    .data.defaultPrint:0000000000000000 $d
 
 UNDEFINED SYMBOLS
 memset
@@ -1308,6 +1400,9 @@ HAL_RCC_ClockConfig
 HAL_Init
 MX_GPIO_Init
 MX_USART2_UART_Init
+ARM GAS  C:\Users\jacki\AppData\Local\Temp\ccSIbPnO.s 			page 25
+
+
 MX_I2C1_Init
 MX_TIM5_Init
 MX_TIM12_Init
@@ -1316,10 +1411,12 @@ Servo_Init
 HAL_GPIO_WritePin
 Actuator_Init
 DCMotor_Init
-HAL_TIM_Encoder_Start
-Drive_DCMotor
-HAL_Delay
-Stop_DCMotor
+DCMotor_Encoder_Init
+HAL_UART_Receive_IT
+atoi
+Drive_DCMotor_Angle
+HAL_UART_Transmit
 htim3
 htim12
 htim5
+huart2

@@ -11,6 +11,7 @@
 
 #include "motor.h"
 #include <math.h>
+#include <stdlib.h>
 
 static char servoFreqError      = 0;
 static char actFreqError        = 0;
@@ -169,6 +170,10 @@ DCMotor_Error DCMotor_Encoder_Init(DCMotor_Encoder_Instance_t* encMotor){
     if((encMotor == NULL) || (encMotor->encConfig == NULL) || (encMotor->motorInstance == NULL))
         return DC_MOTOR_INSTANCE_ERR;
 
+    /* Set Local Scope Variables */
+    currAngle       = encMotor->encConfig->Current_Angle;
+    currEncodeCnt   = encMotor->encConfig->Default_Counter;
+
     /* Set Encoder Default Counter Value */
     __HAL_TIM_SET_COUNTER(encMotor->Encoder_Timer, encMotor->encConfig->Default_Counter);
     error = HAL_TIM_Encoder_Start(encMotor->Encoder_Timer, TIM_CHANNEL_ALL);
@@ -199,21 +204,46 @@ DCMotor_Error Drive_DCMotor_Angle(const DCMotor_Encoder_Instance_t* encMotor, in
 
     /* Default Parameter Arguments */
     if(angle == 0)
-        desiredCnt = encMotor->encConfig->Default_Counter;
-    else if(angle == 360)
-        desiredCnt == encMotor->encConfig->Default_Counter * 2;
-    else if(angle == -360)
-        desiredCnt == 0;
-    else{
-        angle_to_counter = angle / encMotor->encConfig->Degree_Per_Pulse;
-        if(angle < 0)
-            desiredCnt -= angle_to_counter;
-        else
-            desiredCnt += angle_to_counter;
+        return DC_MOTOR_OK;
+    else if(angle == 360){
+        desiredCnt = encMotor->encConfig->Default_Counter * 2;
+        error = Drive_DCMotor(encMotor->motorInstance, 40, CLOCKWISE);
+        while(currEncodeCnt <= desiredCnt){
+            currEncodeCnt = __HAL_TIM_GET_COUNTER(encMotor->Encoder_Timer);
+        }
+        error |= Stop_DCMotor(encMotor->motorInstance);
     }
-
-    /* Poll until angle is detected */
-    
+    else if(angle == -360){
+        desiredCnt = 0;
+        error = Drive_DCMotor(encMotor->motorInstance, 40, COUNTER_CLOCKWISE);
+        while(currEncodeCnt >= desiredCnt){
+            currEncodeCnt = __HAL_TIM_GET_COUNTER(encMotor->Encoder_Timer);
+        }
+        error |= Stop_DCMotor(encMotor->motorInstance);
+    }
+    else{
+        angle_to_counter = abs(angle) / encMotor->encConfig->Degree_Per_Pulse;
+        if(angle < 0){
+            desiredCnt = currEncodeCnt - angle_to_counter;
+            error = Drive_DCMotor(encMotor->motorInstance, 99, COUNTER_CLOCKWISE);
+            HAL_Delay(1);
+            error = Drive_DCMotor(encMotor->motorInstance, 40, COUNTER_CLOCKWISE);
+            while(currEncodeCnt >= desiredCnt){
+                currEncodeCnt = __HAL_TIM_GET_COUNTER(encMotor->Encoder_Timer);
+            }
+            error |= Stop_DCMotor(encMotor->motorInstance);
+        }
+        else{
+            desiredCnt = currEncodeCnt + angle_to_counter;
+            error = Drive_DCMotor(encMotor->motorInstance, 99, CLOCKWISE);
+            HAL_Delay(1);
+            error = Drive_DCMotor(encMotor->motorInstance, 40, CLOCKWISE);
+            while(currEncodeCnt <= desiredCnt){
+                currEncodeCnt = __HAL_TIM_GET_COUNTER(encMotor->Encoder_Timer);
+            }
+            error |= Stop_DCMotor(encMotor->motorInstance);
+        }
+    }
 
     /* Update Control Variable */
     currAngle += angle;
@@ -224,6 +254,9 @@ DCMotor_Error Drive_DCMotor_Angle(const DCMotor_Encoder_Instance_t* encMotor, in
 
 //Actuator Functions
 Actuator_Error Actuator_Init(Actuator_Instance_t* act){
+
+    uint16_t min_cnt;
+    uint16_t max_cnt;
 
     /* Makes sure Actuator Instance Struct and Actuator Config struct are initialzied */
     if(act == NULL)
@@ -242,8 +275,14 @@ Actuator_Error Actuator_Init(Actuator_Instance_t* act){
     }
 
     /* Configure Min and Max counter based on user config */
-    act->Min_Cnt = act->config->Min_Pulse / (1 / (DESIRED_ACT_FREQ * pow(10, -6)) / (float)__HAL_TIM_GET_AUTORELOAD(act->Act_Timer));
-    act->Max_Cnt = act->config->Max_Pulse / (1 / (DESIRED_ACT_FREQ * pow(10, -6)) / (float)__HAL_TIM_GET_AUTORELOAD(act->Act_Timer));
+
+    //Grab Min and Max Count from Min and Max length
+    min_cnt = act->config->Min_Pulse / (1 / (DESIRED_ACT_FREQ * pow(10, -6)) / (float)__HAL_TIM_GET_AUTORELOAD(act->Act_Timer));
+    max_cnt = act->config->Max_Pulse / (1 / (DESIRED_ACT_FREQ * pow(10, -6)) / (float)__HAL_TIM_GET_AUTORELOAD(act->Act_Timer));
+    
+    //Save Min and Max Counter for Desired Min and Max Length
+    act->Min_Cnt = map(act->config->Desired_Min_Length, act->config->Min_Length, act->config->Max_Length, min_cnt, max_cnt);
+    act->Max_Cnt = map(act->config->Desired_Max_Length, act->config->Min_Length, act->config->Max_Length, min_cnt, max_cnt);
 
     /* Start Actuator PWM Signal */
     __HAL_TIM_SET_COMPARE(act->Act_Timer, act->Channel, act->Min_Cnt);
@@ -260,13 +299,13 @@ Actuator_Error Drive_Actuator(const Actuator_Instance_t* act, const uint8_t leng
         return ACTUATOR_INSTANCE_ERROR;
     else if(act->config == NULL)
         return ACTUATOR_INSTANCE_ERROR;
-    else if(length < act->config->Min_Length)
+    else if(length < act->config->Desired_Min_Length)
         return ACTUATOR_UNDER_RANGE;
-    else if(length > act->config->Max_Length)
+    else if(length > act->config->Desired_Max_Length)
         return ACTUATOR_ABOVE_RANGE;
 
     /* Map length to counter value range */
-    uint16_t mappedLength = map(length, act->config->Min_Length, act->config->Max_Length, act->Min_Cnt, act->Max_Cnt);
+    uint16_t mappedLength = map(length, act->config->Desired_Min_Length, act->config->Desired_Max_Length, act->Min_Cnt, act->Max_Cnt);
     
     /* Set New PWM Compare Value */
     __HAL_TIM_SET_COMPARE(act->Act_Timer, act->Channel, mappedLength);

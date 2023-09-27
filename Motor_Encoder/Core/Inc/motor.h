@@ -106,6 +106,8 @@ typedef struct{
     uint16_t 	Max_Pulse;                     //uS Based
     uint8_t 	Min_Length;                    //mm Based
     uint8_t 	Max_Length;                    //mm Based
+	uint8_t		Desired_Min_Length;			   //mm Based
+	uint8_t 	Desired_Max_Length;			   //mm Based
 } Actuator_Config_t;
 
 typedef struct 
