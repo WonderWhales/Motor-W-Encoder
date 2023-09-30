@@ -13,6 +13,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#define STM32F446
+
 static char servoFreqError      = 0;
 static char actFreqError        = 0;
 static int32_t currEncodeCnt    = 0;
@@ -43,10 +45,14 @@ Servo_Error Servo_Init(Servo_Instance_t* servo){
     else if(servo->config == NULL)
         return SERVO_INSTANCE_ERROR;
 
-    uint16_t timFreq;
+    uint16_t timFreq = 0;
 
 	/* Check if this timer is setup correctly for SERVO Control */
-	timFreq = Get_Freq(HAL_RCC_GetSysClockFreq(), servo->htim->Init.Prescaler, __HAL_TIM_GET_AUTORELOAD(servo->htim));
+    #ifdef STM32F446
+	    timFreq = Get_Freq(HAL_RCC_GetSysClockFreq()/2, servo->htim->Init.Prescaler, __HAL_TIM_GET_AUTORELOAD(servo->htim));
+    #else
+        timFreq = Get_Freq(HAL_RCC_GetSysClockFreq(), servo->htim->Init.Prescaler, __HAL_TIM_GET_AUTORELOAD(servo->htim));
+    #endif
 
 	if(timFreq != DESIRED_SERVO_FREQ){
 		servoFreqError = 1;
@@ -266,7 +272,11 @@ Actuator_Error Actuator_Init(Actuator_Instance_t* act){
 
     /* Calculate Timer Frequency */
     uint16_t timFreq = 0;
-    timFreq = Get_Freq(HAL_RCC_GetSysClockFreq(), act->Act_Timer->Init.Prescaler, __HAL_TIM_GET_AUTORELOAD(act->Act_Timer));
+    #ifdef STM32F446
+        timFreq = Get_Freq(HAL_RCC_GetSysClockFreq()/2, act->Act_Timer->Init.Prescaler, __HAL_TIM_GET_AUTORELOAD(act->Act_Timer));
+    #else
+        timFreq = Get_Freq(HAL_RCC_GetSysClockFreq(), act->Act_Timer->Init.Prescaler, __HAL_TIM_GET_AUTORELOAD(act->Act_Timer));
+    #endif
 
     /* Check if timer gives desired frequency */
     if(timFreq != DESIRED_ACT_FREQ){

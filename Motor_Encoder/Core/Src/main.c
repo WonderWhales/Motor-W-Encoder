@@ -159,6 +159,12 @@ int main(void)
 
   Actuator_Init(&actInstance);
 
+  Drive_Actuator(&actInstance, 8);
+
+  Drive_Actuator(&actInstance, 16);
+
+  Drive_Actuator(&actInstance, 19);
+
   dcMotorConfig.Min_Speed = 0;
   dcMotorConfig.Max_Speed = 100;
 
@@ -301,10 +307,6 @@ void Error_Handler(void)
   {
   }
   /* USER CODE END Error_Handler_Debug */
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-  inUART = 1;
 }
 
 #ifdef  USE_FULL_ASSERT
